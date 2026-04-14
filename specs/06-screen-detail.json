@@ -1,0 +1,180 @@
+{
+  "screen": "detail",
+  "id": "screen-detail",
+  "title": "SKILL DETAIL",
+  "description": "Full skill viewer. Sidebar step list + main content panel showing step number (Doto), description, and YAML code block. Footer metadata row. Also reachable from Library by clicking a skill card.",
+
+  "layout": {
+    "type": "column",
+    "children": ["detail-header", "detail-body", "detail-footer"]
+  },
+
+  "components": {
+    "detail-header": {
+      "type": "header",
+      "padding": "14px 20px",
+      "border": "bottom",
+      "layout": "row space-between align-center gap-12",
+      "children": {
+        "left": {
+          "type": "column",
+          "children": {
+            "skill-name": {
+              "id": "detail-name",
+              "font": "Syne",
+              "size": 17,
+              "weight": 700,
+              "color": "text-dis2"
+            },
+            "tags": {
+              "layout": "row gap-6",
+              "margin-top": 6,
+              "items": [
+                { "id": "tag-status", "values": ["READY", "DRAFT"] },
+                { "id": "tag-type",   "values": ["BROWSER", "DESKTOP"] },
+                { "id": "tag-steps",  "format": "{n} STEPS" }
+              ]
+            }
+          }
+        },
+        "right": {
+          "layout": "row gap-8",
+          "children": {
+            "btn-share": {
+              "type": "button",
+              "variant": "ghost",
+              "icon": "icon-share",
+              "label": "SHARE",
+              "on-click": "goTo('detail','share',1)"
+            },
+            "btn-run": {
+              "type": "button",
+              "variant": "secondary",
+              "icon": "icon-run",
+              "label": "RUN",
+              "on-click": "runSkill(currentSkill)"
+            }
+          }
+        }
+      }
+    },
+
+    "detail-body": {
+      "type": "row",
+      "flex": 1,
+      "overflow": "hidden",
+      "children": ["detail-sidebar", "detail-main"]
+    },
+
+    "detail-sidebar": {
+      "type": "step-list",
+      "width": 160,
+      "border": "right",
+      "overflow": "scroll-y",
+      "padding": "8px 0",
+      "item": {
+        "type": "step-item",
+        "padding": "9px 16px",
+        "cursor": "pointer",
+        "on-click": "selectStep(idx, this)",
+        "states": {
+          "default": { "background": "transparent" },
+          "hover":   { "background": "surface" },
+          "active":  {
+            "background": "surface-raised",
+            "border-left": "2px solid accent",
+            "padding-left": 14
+          }
+        },
+        "children": {
+          "num":   { "font": "Doto", "size": 18, "color": "text-dis", "active-color": "accent-br" },
+          "label": { "font": "Syne Mono", "size": 9, "color": "text-dis", "active-color": "text-sec" }
+        }
+      }
+    },
+
+    "detail-main": {
+      "type": "scroll-column",
+      "flex": 1,
+      "padding": "20px 24px",
+      "gap": 16,
+      "overflow": "scroll-y",
+      "transition": "GSAP autoAlpha+x:8→0, 0.18s power2.out on step change",
+      "children": {
+        "step-num": {
+          "id": "step-num",
+          "font": "Doto",
+          "size": 52,
+          "color": "text-dis2",
+          "line-height": 1,
+          "note": "Primary hierarchy layer — oversized Doto is the visual hero"
+        },
+        "step-sub": {
+          "id": "step-sub",
+          "font": "Syne Mono",
+          "size": 10,
+          "color": "text-dis",
+          "text-transform": "uppercase",
+          "letter-spacing": "0.08em",
+          "format": "{action} · {type}"
+        },
+        "step-desc": {
+          "id": "step-desc",
+          "font": "Syne",
+          "size": 15,
+          "color": "text-pri",
+          "line-height": 1.6
+        },
+        "step-code": {
+          "id": "step-code",
+          "type": "code-block",
+          "background": "surface",
+          "border": "border",
+          "border-radius": 8,
+          "padding": "12px 14px",
+          "font": "Syne Mono",
+          "size": 11,
+          "color": "text-sec",
+          "line-height": 1.9,
+          "language": "yaml",
+          "overflow": "scroll-x"
+        }
+      }
+    },
+
+    "detail-footer": {
+      "type": "data-row-bar",
+      "border": "top",
+      "padding": "10px 20px",
+      "grid": "repeat(4, 1fr)",
+      "columns": [
+        { "key": "STEPS",  "id": "foot-steps",  "value": "12" },
+        { "key": "CONF.",  "id": "foot-conf",   "value": "98.3%", "color": "success" },
+        { "key": "RUNS",   "id": "foot-runs",   "value": "47",    "color": "accent-br" },
+        { "key": "ID",     "id": "foot-id",     "value": "skl_a4f9", "color": "text-dis" }
+      ]
+    }
+  },
+
+  "data": {
+    "skill-source": "SKILLS[currentSkill]",
+    "steps-per-skill": {
+      "checkout": 7,
+      "deploy":   8,
+      "triage":   6
+    }
+  },
+
+  "behavior": {
+    "on-enter": "loadDetailScreen(currentSkill); renderSidebar(); showStep(0)",
+    "step-select": "update sidebar .active; GSAP-animate main content; showStep(idx)",
+    "btn-run": "future — trigger Playwright execution"
+  },
+
+  "navigation": {
+    "back": "library",
+    "forward": [
+      { "trigger": "btn-share", "to": "share" }
+    ]
+  }
+}

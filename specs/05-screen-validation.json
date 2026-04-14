@@ -1,0 +1,186 @@
+{
+  "screen": "validation",
+  "id": "screen-validation",
+  "title": "VALIDATE SKILL",
+  "description": "3-question wizard to validate and enrich the extracted skill with context: intent, frequency, audience. Segmented progress bar. Each question has 4 options, one selectable at a time.",
+
+  "layout": {
+    "type": "column",
+    "children": ["val-wrap"]
+  },
+
+  "components": {
+    "val-wrap": {
+      "type": "centered-column",
+      "flex": 1,
+      "padding": "32px 40px",
+      "max-width": 640,
+      "margin": "0 auto",
+      "gap": 24,
+      "children": [
+        "val-progress",
+        "val-question-block",
+        "val-options",
+        "val-nav"
+      ]
+    },
+
+    "val-progress": {
+      "type": "progress-header",
+      "children": {
+        "header-row": {
+          "layout": "row space-between",
+          "counter": {
+            "id": "val-q-counter",
+            "font": "Syne Mono",
+            "size": 10,
+            "color": "accent-br",
+            "format": "Q {current} / {total}"
+          }
+        },
+        "seg-bar": {
+          "type": "segmented-bar",
+          "segments": 3,
+          "gap": 3,
+          "height": 3,
+          "segment-ids": ["val-seg-0", "val-seg-1", "val-seg-2"],
+          "states": {
+            "default": "border",
+            "current": "accent",
+            "done":    "success"
+          },
+          "transition": "background 300ms ease-out"
+        }
+      }
+    },
+
+    "val-question-block": {
+      "type": "question",
+      "children": {
+        "q-label": {
+          "id": "val-q-label",
+          "font": "Syne Mono",
+          "size": 10,
+          "color": "text-dis",
+          "margin-bottom": 10,
+          "format": "QUESTION {n} · {category}"
+        },
+        "q-text": {
+          "id": "val-question",
+          "font": "Syne",
+          "size": 17,
+          "weight": 600,
+          "color": "text-dis2",
+          "line-height": 1.45
+        }
+      }
+    },
+
+    "val-options": {
+      "type": "option-list",
+      "id": "val-options",
+      "gap": 8,
+      "item": {
+        "type": "option",
+        "padding": "13px 16px",
+        "border": "border-vis",
+        "border-radius": 8,
+        "font": "Syne",
+        "size": 14,
+        "color": "text-sec",
+        "cursor": "pointer",
+        "states": {
+          "hover":    { "border-color": "accent",    "color": "text-pri" },
+          "selected": { "border-color": "accent-br", "color": "accent-br", "background": "accent-sub" }
+        },
+        "on-click": "selectOpt(this, idx)"
+      }
+    },
+
+    "val-nav": {
+      "type": "nav-row",
+      "layout": "row space-between align-center",
+      "children": {
+        "btn-back": {
+          "id": "btn-val-back",
+          "type": "button",
+          "variant": "ghost",
+          "label": "← BACK",
+          "hidden-on": "question-0",
+          "on-click": "prevQuestion() or goTo('validation','processing',-1)"
+        },
+        "dots": {
+          "type": "dot-indicator",
+          "count": 3,
+          "dot-ids": ["vd-0", "vd-1", "vd-2"],
+          "size": 6,
+          "states": {
+            "default": "border-vis",
+            "current": "accent"
+          }
+        },
+        "btn-next": {
+          "id": "btn-val-next",
+          "type": "button",
+          "variant": "primary",
+          "label": "NEXT →",
+          "last-label": "FINISH →",
+          "on-click": "nextQuestion() or goTo('validation','detail',1)"
+        }
+      }
+    }
+  },
+
+  "data": {
+    "questions": [
+      {
+        "id": "intent",
+        "label": "QUESTION 1 · INTENT",
+        "text": "What is the primary goal of this skill?",
+        "options": [
+          "Automate a repetitive browser workflow",
+          "Document a process for team reference",
+          "Test application functionality end-to-end",
+          "Learn from an expert's workflow"
+        ]
+      },
+      {
+        "id": "frequency",
+        "label": "QUESTION 2 · FREQUENCY",
+        "text": "How often will this skill typically run?",
+        "options": [
+          "Multiple times per day (high volume)",
+          "Once per session or work cycle",
+          "Occasionally — triggered by events",
+          "One-time setup or migration task"
+        ]
+      },
+      {
+        "id": "audience",
+        "label": "QUESTION 3 · AUDIENCE",
+        "text": "Who is the primary audience for this skill?",
+        "options": [
+          "Developers / engineers",
+          "QA / testing team",
+          "Product managers / stakeholders",
+          "Any team member"
+        ]
+      }
+    ]
+  },
+
+  "behavior": {
+    "on-enter": "renderQuestion(currentQ=0)",
+    "option-select": "mark selected, store answer in selectedOpts[currentQ]",
+    "next": "if last question → goTo detail, else currentQ++, renderQuestion()",
+    "back": "if first question → goTo processing, else currentQ--, renderQuestion()",
+    "transition": "GSAP fade+slide options block (y:8→0, autoAlpha:0→1, 0.18s power2.out)"
+  },
+
+  "navigation": {
+    "back": "processing",
+    "forward": [
+      { "trigger": "btn-val-next on last Q", "to": "detail" }
+    ]
+  }
+}

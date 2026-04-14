@@ -1,0 +1,107 @@
+{
+  "screen": "library",
+  "id": "screen-library",
+  "title": "YOUR SKILLS",
+  "description": "Home screen. Grid of all recorded skills. Entry point to record a new one.",
+  "initial": true,
+
+  "layout": {
+    "type": "column",
+    "children": ["filter-bar", "skill-grid", "fab"]
+  },
+
+  "components": {
+    "filter-bar": {
+      "type": "tab-bar",
+      "height": 44,
+      "border": "bottom",
+      "tabs": [
+        { "id": "all",     "label": "ALL",     "default": true },
+        { "id": "browser", "label": "BROWSER" },
+        { "id": "desktop", "label": "DESKTOP" }
+      ],
+      "right": {
+        "type": "counter",
+        "id": "lib-count",
+        "format": "{n} SKILLS",
+        "font": "Syne Mono",
+        "color": "text-dis"
+      }
+    },
+
+    "skill-grid": {
+      "type": "grid",
+      "id": "skill-grid",
+      "columns": 3,
+      "gap": 12,
+      "padding": "16px 20px",
+      "overflow": "scroll-y",
+      "flex": 1,
+      "empty-state": {
+        "icon": "logo.png",
+        "title": "No skills yet",
+        "desc": "Record your first workflow to get started.",
+        "action": { "label": "NEW SKILL", "icon": "icon-rec", "goto": "source" }
+      }
+    },
+
+    "skill-card": {
+      "type": "card",
+      "border-radius": 10,
+      "cursor": "pointer",
+      "hover": { "border-color": "border-vis" },
+      "on-click": "goToDetail(skillId)",
+      "children": {
+        "thumb": {
+          "type": "thumbnail",
+          "height": 120,
+          "content": "dot-grid + step-count-badge",
+          "badge-font": "Doto",
+          "badge-size": 28
+        },
+        "body": {
+          "padding": "10px 12px",
+          "children": {
+            "name":   { "font": "Syne", "size": 14, "weight": 600, "truncate": true },
+            "meta":   { "font": "Syne Mono", "size": 9, "color": "text-dis", "items": ["steps", "duration"] },
+            "status": { "type": "tag", "values": ["READY", "DRAFT", "RUNNING"] }
+          }
+        }
+      }
+    },
+
+    "fab": {
+      "type": "button",
+      "id": "btn-new-skill",
+      "shape": "circle",
+      "size": 52,
+      "position": "absolute",
+      "anchor": "bottom-right",
+      "offset": "20px",
+      "icon": "icon-plus",
+      "background": "accent",
+      "shadow": "0 4px 24px rgba(124,58,237,0.4)",
+      "animation": "pulse-acc",
+      "on-click": "goTo('library','source',1)"
+    }
+  },
+
+  "navigation": {
+    "back": null,
+    "forward": [
+      { "trigger": "fab-click",       "to": "source" },
+      { "trigger": "skill-card-click","to": "detail" }
+    ]
+  },
+
+  "data": {
+    "skills": {
+      "source": "local-store",
+      "mock": [
+        { "id": "checkout", "name": "Checkout Flow",  "steps": 12, "duration": "2m 34s", "status": "ready",  "type": "browser" },
+        { "id": "deploy",   "name": "Deploy Script",  "steps": 8,  "duration": "1m 12s", "status": "ready",  "type": "desktop" },
+        { "id": "triage",   "name": "Issue Triage",   "steps": 6,  "duration": "0m 58s", "status": "draft",  "type": "browser" }
+      ]
+    }
+  }
+}
