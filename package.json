@@ -1,0 +1,27 @@
+{
+  "name": "parrot",
+  "version": "1.0.0",
+  "description": "Screen-to-AI-Skill Generator",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc && cp src/renderer/index.html dist/renderer/index.html",
+    "start": "pnpm build && electron .",
+    "dev": "tsc --watch & sleep 2 && electron . --enable-logging"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["electron"]
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "electron": "^36.0.0",
+    "playwright": "^1.50.0",
+    "yaml": "^2.7.0"
+  }
+}
