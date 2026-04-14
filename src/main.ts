@@ -169,3 +169,19 @@ ipcMain.handle('save-skill-file', async (_event, { content, filename }: { conten
     throw err;
   }
 });
+
+ipcMain.handle('minimize-window', () => {
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.minimize();
+});
+
+ipcMain.handle('list-skills', async () => {
+  const skillsDir = path.join(os.homedir(), '.claude', 'skills');
+  try {
+    const files = await fs.readdir(skillsDir);
+    return files
+      .filter(f => f.endsWith('.md'))
+      .map(f => ({ filename: f, name: f.replace(/\.md$/, '').replace(/-/g, ' ') }));
+  } catch {
+    return [];
+  }
+});

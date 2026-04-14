@@ -1,0 +1,150 @@
+/* ═══════════════════════════════════════════════════
+   PARROT — Badges & Tags
+   All badge, tag, and label pill variants.
+   Requires: tokens.css
+   ═══════════════════════════════════════════════════ */
+
+/* ── BASE ────────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sharp);
+  font-family: var(--font-mono);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+/* ── VERSION ─────────────────────────────────────── */
+/* Eyebrow pill on home hero: "Alpha · Hackathon Build" */
+.badge-version {
+  font-size: var(--text-xs);
+  letter-spacing: 0.2em;
+  color: var(--violet);
+  border-color: var(--border-bright);
+  background: var(--violet-dim);
+  padding: 3px 10px;
+}
+
+/* ── REC ─────────────────────────────────────────── */
+/* Recording HUD indicator with blinking dot */
+.badge-rec {
+  font-size: 0.7rem;
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.22em;
+  color: var(--red);
+  border-color: rgba(239, 68, 68, 0.35);
+  background: var(--red-dim);
+  padding: 5px 12px;
+}
+
+/* Blinking dot inside .badge-rec */
+.badge-rec-dot {
+  width: 7px;
+  height: 7px;
+  background: var(--red);
+  border-radius: var(--radius-full);
+  box-shadow: 0 0 8px var(--red);
+  animation: blink 1.2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+/* ── STATUS ──────────────────────────────────────── */
+/* Skill card status chip: READY / DRAFT / RUNNING */
+.badge-status {
+  font-size: 0.48rem;
+  letter-spacing: 0.14em;
+  padding: 2px 6px;
+}
+
+.badge-status.ready {
+  color: var(--green);
+  border-color: rgba(34, 197, 94, 0.35);
+  background: var(--green-dim);
+}
+
+.badge-status.draft {
+  color: var(--text-dim);
+  border-color: rgba(71, 85, 105, 0.4);
+  background: transparent;
+}
+
+.badge-status.running {
+  color: var(--violet);
+  border-color: var(--border-bright);
+  background: var(--violet-dim);
+}
+
+/* ── SKILL READY ─────────────────────────────────── */
+/* Larger status chip in Skill Result header */
+.badge-skill-ready {
+  font-size: 0.65rem;
+  letter-spacing: 0.16em;
+  color: var(--green);
+  border-color: rgba(34, 197, 94, 0.35);
+  background: var(--green-dim);
+  padding: 3px 8px;
+}
+
+/* ── OPTIONAL ────────────────────────────────────── */
+/* Question card — marks optional questions */
+.badge-optional {
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  color: var(--text-dim);
+  border-color: rgba(71, 85, 105, 0.4);
+  background: transparent;
+  padding: 2px 6px;
+}
+
+/* ── CLICK COUNTER ───────────────────────────────── */
+/* Recording HUD — tracks number of recorded events */
+.badge-counter {
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  color: var(--violet);
+  border-color: var(--border-bright);
+  background: var(--violet-dim);
+  padding: 4px 10px;
+}
+
+/* ── FILENAME ────────────────────────────────────── */
+/* Skill result header — shows .md file path */
+.badge-filename {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: var(--weight-light);
+  letter-spacing: 0.05em;
+  text-transform: none;
+  color: var(--text-dim);
+  border: none;
+  background: none;
+  padding: 0;
+}
+
+/* ── INSTALL PATH ────────────────────────────────── */
+/* Shows the install destination path */
+.badge-install-path {
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--green);
+  border-color: rgba(34, 197, 94, 0.25);
+  background: var(--green-dim);
+  padding: 4px 10px;
+}
+
+/* ── TYPE TAG (library card) ─────────────────────── */
+/* "BROWSER" / "DESKTOP" chip on skill cards */
+.badge-type {
+  font-size: 0.48rem;
+  letter-spacing: 0.12em;
+  color: var(--violet);
+  border-color: var(--border-bright);
+  background: var(--violet-dim);
+  padding: 2px 6px;
+}

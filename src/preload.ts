@@ -39,4 +39,10 @@ contextBridge.exposeInMainWorld('parrotAPI', {
 
   saveSkillFile: (content: string, filename: string): Promise<void> =>
     ipcRenderer.invoke('save-skill-file', { content, filename }),
+
+  minimizeWindow: (): Promise<void> =>
+    ipcRenderer.invoke('minimize-window'),
+
+  listSkills: (): Promise<{ filename: string; name: string }[]> =>
+    ipcRenderer.invoke('list-skills'),
 });

@@ -1,0 +1,228 @@
+/* ═══════════════════════════════════════════════════
+   PARROT — Buttons v2
+   Nothing-inspired: pill shape, monochrome base,
+   semantic accents, JetBrains Mono ALL CAPS.
+   GSAP micro-interactions via data-btn attribute.
+   Requires: tokens.css
+   ═══════════════════════════════════════════════════ */
+
+/* ── BASE ────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 24px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  line-height: 1;
+  transition: border-color 150ms cubic-bezier(0.25,0.1,0.25,1),
+              color        150ms cubic-bezier(0.25,0.1,0.25,1),
+              background   150ms cubic-bezier(0.25,0.1,0.25,1);
+  -webkit-app-region: no-drag;
+  will-change: transform;
+}
+
+.btn:focus-visible {
+  outline: 1px solid var(--border-bright);
+  outline-offset: 3px;
+}
+.btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ── VARIANTS ────────────────────────────────────── */
+
+/* PRIMARY — solid white fill, black text.
+   The loudest button. Use once per view. */
+.btn-primary {
+  background: var(--text);
+  border-color: transparent;
+  color: #000;
+  font-weight: 500;
+}
+.btn-primary:hover {
+  background: #fff;
+  color: #000;
+}
+
+/* SECONDARY — violet outline.
+   Main confirmation action (generate, share). */
+.btn-secondary {
+  border-color: var(--border-bright);
+  color: var(--violet);
+}
+.btn-secondary:hover {
+  border-color: var(--violet);
+  color: #fff;
+  background: var(--violet-dim);
+}
+
+/* OUTLINE — neutral outline.
+   De-emphasised: copy, secondary actions. */
+.btn-outline {
+  border-color: var(--border);
+  color: var(--text-mid);
+}
+.btn-outline:hover {
+  border-color: var(--border-bright);
+  color: var(--text);
+}
+
+/* GHOST — no border, no fill.
+   Navigation: back, cancel in low-emphasis context. */
+.btn-ghost {
+  border-color: transparent;
+  color: var(--text-dim);
+  padding: 0 16px;
+}
+.btn-ghost:hover {
+  color: var(--text-mid);
+}
+
+/* RECORD — red outline. The one brand moment.
+   Earns the accent colour — use only for recording CTA. */
+.btn-record {
+  border-color: rgba(239, 68, 68, 0.45);
+  color: var(--red);
+  font-size: 13px;
+  padding: 0 28px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+.btn-record:hover {
+  border-color: var(--red);
+  background: var(--red-dim);
+}
+
+/* DANGER — ghost until hover, then red.
+   Cancel, destructive confirm. */
+.btn-danger {
+  border-color: var(--border);
+  color: var(--text-dim);
+}
+.btn-danger:hover {
+  border-color: rgba(239, 68, 68, 0.5);
+  color: var(--red);
+  background: var(--red-dim);
+}
+
+/* SUCCESS — green outline. Install, confirm positive. */
+.btn-success {
+  border-color: rgba(34, 197, 94, 0.4);
+  color: var(--green);
+}
+.btn-success:hover {
+  border-color: var(--green);
+  background: var(--green-dim);
+}
+.btn-success.installed {
+  opacity: 0.5;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* ANSWER — neutral pill, violet when active.
+   Multiple-choice question options. */
+.btn-answer {
+  border-color: var(--border-bright);
+  color: var(--text-mid);
+  min-height: 36px;
+  padding: 0 18px;
+  font-size: 11px;
+}
+.btn-answer:hover {
+  border-color: var(--violet);
+  color: var(--violet);
+}
+.btn-answer.active {
+  border-color: var(--violet);
+  background: var(--violet-dim);
+  color: var(--violet);
+}
+
+/* ── SIZES ───────────────────────────────────────── */
+.btn-sm {
+  min-height: 32px;
+  padding: 0 14px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
+.btn-lg {
+  min-height: 52px;
+  padding: 0 36px;
+  font-size: 13px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+}
+
+/* ── ICON BUTTON ─────────────────────────────────── */
+/* Square-ish circle — theme toggle, close, etc. */
+.btn-icon {
+  width: 40px;
+  height: 40px;
+  min-height: unset;
+  padding: 0;
+  border-radius: 999px;
+  border-color: var(--border-bright);
+  color: var(--text-mid);
+  font-size: 15px;
+  background: var(--bg-2);
+}
+.btn-icon:hover {
+  border-color: var(--text-mid);
+  color: var(--text);
+  background: var(--bg-2);
+}
+
+/* ── FAB ─────────────────────────────────────────── */
+/* Floating action — one per screen, bottom-right. */
+.btn-fab {
+  width: 52px;
+  height: 52px;
+  min-height: unset;
+  padding: 0;
+  border-radius: 999px;
+  border: none;
+  background: var(--violet);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 300;
+  line-height: 1;
+  box-shadow: 0 0 0 1px rgba(139,92,246,0.3),
+              0 4px 24px rgba(139,92,246,0.35);
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: var(--z-hud, 50);
+}
+.btn-fab:hover {
+  background: #9d6eff;
+  box-shadow: 0 0 0 1px rgba(139,92,246,0.5),
+              0 6px 32px rgba(139,92,246,0.5);
+}
+
+/* ── RECORD DOT (child element) ──────────────────── */
+/* The one brand moment inside .btn-record */
+.btn-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--red);
+  box-shadow: 0 0 6px var(--red);
+  flex-shrink: 0;
+  animation: pulse-dot 2s ease-in-out infinite;
+}

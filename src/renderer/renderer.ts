@@ -62,6 +62,7 @@ interface Window {
 
 // ─── Elements ─────────────────────────────────────────────────────────────────
 const screenHome       = document.getElementById('screen-home')!;
+const screenLibrary    = document.getElementById('screen-library')!;
 const screenRecording  = document.getElementById('screen-recording')!;
 const screenAnalyzing  = document.getElementById('screen-analyzing')!;
 const screenAnalysis   = document.getElementById('screen-analysis-result')!;
@@ -69,7 +70,8 @@ const screenGenerating = document.getElementById('screen-generating')!;
 const screenSkill      = document.getElementById('screen-skill-result')!;
 const screenError      = document.getElementById('screen-error')!;
 
-const btnRecord      = document.getElementById('btn-record')       as HTMLButtonElement;
+const btnRecord        = document.getElementById('btn-record')         as HTMLButtonElement;
+const btnOpenLibrary   = document.getElementById('btn-open-library')   as HTMLButtonElement;
 const btnCancel      = document.getElementById('btn-cancel')       as HTMLButtonElement;
 const btnStopAnalyze = document.getElementById('btn-stop-analyze') as HTMLButtonElement;
 const preview        = document.getElementById('preview')          as HTMLVideoElement;
@@ -97,7 +99,7 @@ let retryAction: (() => void) | null = null;
 
 // ─── Screen navigation ─────────────────────────────────────────────────────────
 function showScreen(id: string): void {
-  [screenHome, screenRecording, screenAnalyzing, screenAnalysis,
+  [screenHome, screenLibrary, screenRecording, screenAnalyzing, screenAnalysis,
    screenGenerating, screenSkill, screenError].forEach(s => {
     (s as HTMLElement).style.display = 'none';
   });
@@ -498,7 +500,75 @@ function syntaxHighlight(content: string): string {
     .replace(/^(#{1,3} .+)$/gm, '<span class="hl-header">$1</span>');
 }
 
+// ─── Library screen ────────────────────────────────────────────────────────────
+async function loadLibrary(): Promise<void> {
+  const grid    = document.getElementById('skill-grid')!;
+  const emptyEl = document.getElementById('lib-empty')!;
+  const countEl = document.getElementById('lib-count')!;
+
+  const skills: { filename: string; name: string }[] =
+    await (window as any).parrotAPI.listSkills();
+
+  countEl.textContent = `${skills.length} SKILL${skills.length !== 1 ? 'S' : ''}`;
+
+  // Remove stale cards (keep empty state element)
+  grid.querySelectorAll('.skill-lib-card').forEach(el => el.remove());
+
+  if (skills.length === 0) {
+    emptyEl.style.display = 'flex';
+    return;
+  }
+
+  emptyEl.style.display = 'none';
+
+  skills.forEach(skill => {
+    const initials = skill.name.trim().substring(0, 2).toUpperCase();
+    const card = document.createElement('div');
+    card.className = 'skill-lib-card';
+    card.innerHTML = `
+      <div class="skill-lib-thumb">
+        <div class="skill-lib-initials">${initials}</div>
+      </div>
+      <div class="skill-lib-body">
+        <div class="skill-lib-name">${skill.name}</div>
+        <div class="skill-lib-file">${skill.filename}</div>
+        <div class="skill-lib-tag">READY</div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
 // ─── Event listeners ───────────────────────────────────────────────────────────
+
+// Library button
+btnOpenLibrary.addEventListener('click', () => {
+  showScreen('screen-library');
+  loadLibrary();
+});
+
+// Library — back button & FAB
+document.addEventListener('click', (e) => {
+  const target = e.target as HTMLElement;
+  if (target.id === 'btn-library-back') {
+    showScreen('screen-home');
+  }
+  if (target.id === 'btn-fab-new' || target.id === 'btn-new-from-empty') {
+    showScreen('screen-home');
+    btnRecord.click();
+  }
+});
+
+// Library — filter tabs (visual only)
+document.addEventListener('click', (e) => {
+  const target = e.target as HTMLElement;
+  if (target.classList.contains('lib-tab')) {
+    target.closest('.lib-filter-bar')
+      ?.querySelectorAll('.lib-tab')
+      .forEach(t => t.classList.remove('active'));
+    target.classList.add('active');
+  }
+});
 
 // Record button
 btnRecord.addEventListener('click', async () => {
@@ -545,6 +615,7 @@ btnRecord.addEventListener('click', async () => {
     isRecording = true;
     startCaptureInterval();
     (window as any).parrotAPI.openOverlay();
+    (window as any).parrotAPI.minimizeWindow();
 
   } catch (err) {
     console.warn('[parrot] captura real falló, usando simulación:', err);
@@ -554,6 +625,7 @@ btnRecord.addEventListener('click', async () => {
     isRecording = true;
     startCaptureInterval();
     (window as any).parrotAPI.openOverlay();
+    (window as any).parrotAPI.minimizeWindow();
   }
 });
 

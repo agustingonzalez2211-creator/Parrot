@@ -1,0 +1,196 @@
+/* ═══════════════════════════════════════════════════
+   PARROT — Cards
+   Skill card, question card, code block, install hint.
+   Requires: tokens.css
+   ═══════════════════════════════════════════════════ */
+
+/* ── SKILL LIBRARY CARD ──────────────────────────── */
+/* 3-column grid card in the library screen */
+.skill-card {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color var(--ease-fast);
+  display: flex;
+  flex-direction: column;
+}
+.skill-card:hover { border-color: var(--border-bright); }
+
+/* Thumbnail area — dot-grid pattern + initials */
+.skill-card-thumb {
+  height: 80px;
+  background: var(--bg-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.skill-card-thumb::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(var(--border) 1px, transparent 1px);
+  background-size: 12px 12px;
+  pointer-events: none;
+}
+.skill-card-initials {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.1em;
+  color: var(--violet);
+  opacity: 0.8;
+  position: relative;
+  z-index: 1;
+}
+
+/* Body */
+.skill-card-body {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.skill-card-name {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.04em;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: capitalize;
+}
+.skill-card-meta {
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── QUESTION CARD ───────────────────────────────── */
+/* Validation screen — one card per AI-generated question */
+.question-card {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sharp);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.question-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.question-num {
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
+  color: var(--violet);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.question-text {
+  font-family: var(--font-mono);
+  font-size: var(--text-md);
+  color: var(--text);
+  line-height: 1.6;
+  flex: 1;
+}
+.question-ctx {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+.question-answers {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ── CODE BLOCK ──────────────────────────────────── */
+/* Markdown/SKILL.md preview with syntax highlighting */
+.code-block {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sharp);
+  overflow: auto;
+  max-height: 260px;
+}
+.code-block pre {
+  padding: 16px;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  line-height: 1.7;
+  white-space: pre;
+  color: var(--text-mid);
+}
+
+/* Syntax highlight tokens */
+.hl-key     { color: var(--violet); }
+.hl-punct   { color: var(--text-dim); }
+.hl-str     { color: var(--green); }
+.hl-comment { color: var(--text-dim); font-style: italic; }
+.hl-header  { color: var(--violet); font-weight: bold; }
+
+/* ── INSTALL USAGE HINT ───────────────────────────── */
+/* Violet left-border hint showing usage command */
+.install-hint {
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
+  color: var(--text-mid);
+  padding: 10px 14px;
+  background: var(--bg-1);
+  border-left: 2px solid var(--violet);
+  border-radius: 0 var(--radius-sharp) var(--radius-sharp) 0;
+  line-height: 1.6;
+}
+.install-hint code {
+  color: var(--violet);
+  font-family: var(--font-mono);
+}
+
+/* ── STEP ROW (analysis result) ──────────────────── */
+/* Recorded step list item */
+.step-row {
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
+  color: var(--text-mid);
+  padding: 6px 10px;
+  background: var(--bg-1);
+  border-left: 2px solid var(--border-bright);
+  border-radius: 0 var(--radius-sharp) var(--radius-sharp) 0;
+  line-height: 1.5;
+}
+.step-row-action { color: var(--violet); font-weight: var(--weight-medium); }
+
+/* ── MANUAL STEP LIST ────────────────────────────── */
+/* Numbered instruction list (install steps) */
+.manual-step {
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
+  color: var(--text-mid);
+  display: flex;
+  gap: 10px;
+  line-height: 1.6;
+}
+.manual-step-num {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  font-weight: var(--weight-semibold);
+  color: var(--violet);
+  min-width: 18px;
+  flex-shrink: 0;
+}
