@@ -2,49 +2,48 @@
 
 <img src="assets/logo.png" alt="Parrot Logo" width="600" />
 
+### *Record once. Automate forever.*
 
-### *Graba una vez. Automatizar para siempre.*
+**Turn screen recordings into AI-executable skills — no code required.**
 
-**Conviérta grabaciones de pantalla en habilidades ejecutables por IA — no se requiere código.**
-
-[![Electrón](https://img.shields.io/badge/Electron-36.0-47848F?style=flat-square&logo=electron&logoColor=white)](https://www.electronjs.org/)
+[![Electron](https://img.shields.io/badge/Electron-36.0-47848F?style=flat-square&logo=electron&logoColor=white)](https://www.electronjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Claude](https://img.shields.io/badge/Claude-Opus_4.6-D97757?style=flat-square)](https://anthropic.com)
-[![Licencia](https://img.shields.io/badge/License-MIT-22c55e?style=flat-square)](LICENCIA)
+[![License](https://img.shields.io/badge/License-MIT-22c55e?style=flat-square)](LICENSE)
 
 </div>
 
 ---
 
-## ¿Qué es el loro?
+## What is Parrot?
 
-El loro cierra la brecha entre **experiencia humana** y **Ejecución de IA**.
+Parrot bridges the gap between **human expertise** and **AI execution**.
 
-Grabas tu pantalla mientras realiza cual fluido de trabajo repetitivo. La canalización de IA de Parrot —desarrollada por Claude— observa lo que hiciste, lo entiende semánticamente y lo empaqueta en un archivo de habilidades que Claude Code puede ejecutar a pedido.
+You record your screen while doing any repetitive workflow. Parrot's AI pipeline — powered by Claude — watches what you did, understands it semantically, and packages it into a skill file that Claude Code can execute on demand.
 
-**Sin código. Sin documentación. No hay ningún equipo de ingeniería en el medio.**
+**No code. No documentation. No engineering team in the middle.**
 
 ---
 
-## Cómo funciona
+## How it works
 
-```sirena
-diagrama de flujo LR
- A(["🎬 Registro"]) --> B(["🧠 Análisis de IA"])
- B --> C(["📦 Habilidad generada"])
- C --> D(["⚡ Claude ejecuta"])
+```mermaid
+flowchart LR
+    A(["🎬  Record"]) --> B(["🧠  AI Analyzes"])
+    B --> C(["📦  Skill Generated"])
+    C --> D(["⚡  Claude Executes"])
 
- estilo A relleno:#1f2335,trazo:#8b5cf6,color:#f1f5f9
- estilo B relleno:#1f2335, trazo:#8b5cf6, color:#f1f5f9
- estilo C relleno:#1f2335,trazo:#8b5cf6,color:#f1f5f9
- estilo D relleno:#1f2335,trazo:#22c55e,color:#f1f5f9
+    style A fill:#1f2335,stroke:#8b5cf6,color:#f1f5f9
+    style B fill:#1f2335,stroke:#8b5cf6,color:#f1f5f9
+    style C fill:#1f2335,stroke:#8b5cf6,color:#f1f5f9
+    style D fill:#1f2335,stroke:#22c55e,color:#f1f5f9
 ```
 
-**Paso 1 — Grabar**
-Abra Parrot, presione grabar y simple trabajo. Aplicación real — Chrome, Excel, tus herramientos internas. Una superposición flotante permanente visible para que puedas mantener el control sin cambiar de ventana. Loro captura tu pantalla a intervalos de 2 segundos automáticamente.
+**Step 1 — Record**
+Open Parrot, press record, and just work. In any app — Chrome, Excel, your internal tools. A floating overlay stays visible so you keep control without switching windows. Parrot captures your screen at 2-second intervals automatically.
 
-Cuando te detienes, Loro enviia los fotografías capiturados al modelo de visión de Claude. Claude identifica el significado semánico de cada acción — no "hizo clic en x,y" sino "abrió el hombre de exportación" — extrae los pasos،las variables y los puntos de decisión،luego hace hasta 3 preguntas aclaratorias.Paso 2 — Análisis de IA (Agente 1)**
-Cuando te detienes, Loro enviia los fotografías capiturados al modelo de visión de Claude. Claude identifica el significado semánico de cada acción — no "hizo clic en x,y" sino "abrió el hombre de exportación" — extrae los pasos،las variables y los puntos de decisión،luego hace hasta 3 preguntas aclaratorias.
+**Step 2 — AI Analyzes (Agent 1)**
+When you stop, Parrot sends the captured frames to Claude's vision model. Claude identifies the semantic meaning of each action — not "clicked at x,y" but "opened the export menu" — extracts the steps, variables, and decision points, then asks up to 3 clarifying questions.
 
 **Step 3 — Skill Generated (Agent 2)**
 A second Claude agent takes the analysis and your answers and generates a structured `SKILL.md` file: a portable, executable document Claude Code can load and run. One click installs it to `~/.claude/skills/`.
@@ -158,17 +157,17 @@ disable-model-invocation: true
 allowed-tools: mcp__windows-mcp__screenshot mcp__windows-mcp__click mcp__windows-mcp__type
 ---
 
-## Setup automatico
+## Setup
 
-Sistema operativo: !`uname -s`
-Windows-MCP disponible: !`uvx windows-mcp --version 2>/dev/null || echo "no instalado"`
+OS: !`uname -s`
+Windows-MCP: !`uvx windows-mcp --version 2>/dev/null || echo "not installed"`
 
-## Objetivo
+## Goal
 
 Navigate to the dashboard reports section, apply the current month filter,
 export to CSV, and import the data into the Google Sheets template.
 
-## Pasos
+## Steps
 
 ### 1. Open Dashboard
 Navigate to the sales dashboard. Verify the main dashboard is visible.
@@ -182,13 +181,13 @@ Select the current month in the period filter. Value: {{current_month}}.
 ### 4. Export CSV
 Click "Export CSV" and wait for the download to complete.
 
-## Parametros
+## Parameters
 
 - current_month: string — month to export (e.g. "April 2026")
 
-## Resultado esperado
+## Expected Result
 
-CSV file downloaded, imported into the Google Sheets template.
+CSV file downloaded and imported into the Google Sheets template.
 ```
 
 ---
