@@ -75,10 +75,12 @@ ipcMain.handle("open-overlay", () => {
     x: width - 236,
     y: height - 88,
     frame: false,
+    transparent: true,
     alwaysOnTop: true,
     skipTaskbar: true,
     resizable: false,
     focusable: true,
+    backgroundColor: "#00000000",
     webPreferences: {
       preload: path.join(__dirname, "overlay-preload.js"),
       contextIsolation: true,
@@ -87,7 +89,9 @@ ipcMain.handle("open-overlay", () => {
   });
 
   overlayWindow.loadFile(path.join(__dirname, "renderer", "overlay.html"));
-  overlayWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  if (process.platform !== "win32") {
+    overlayWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  }
 
   overlayWindow.on("closed", () => {
     overlayWindow = null;
