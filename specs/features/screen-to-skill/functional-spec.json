@@ -1,0 +1,213 @@
+{
+  "feature_id": "screen-to-skill",
+  "feature_name": "Screen Recording → AI Skill Generator",
+  "version": "1.0.0",
+  "status": "draft",
+  "date": "2026-04-14",
+
+  "scope": {
+    "description": "Pipeline completo de tres etapas que transforma una grabación de pantalla en un AI Skill (.md) portable y listo para usar en Claude Code (CLI). La app captura eventos clave durante la grabación, los envía a un primer agente de Claude para entender el workflow y generar preguntas de clarificación, luego envía todo a un segundo agente que produce el skill final.",
+    "in_scope": [
+      "Captura de screenshots automáticos en cada click durante la grabación",
+      "Botón 'Detener y analizar' que reemplaza al actual 'Cancelar' cuando hay una grabación activa",
+      "Envío de frames clave + metadata de clicks a Claude API (Agente 1: Análisis de Workflow)",
+      "Pantalla de análisis que muestra: resumen del workflow + 3 preguntas de clarificación (si/no/comentario)",
+      "Envío del análisis + respuestas del usuario a Claude API (Agente 2: Generador de Skill)",
+      "Pantalla de resultado con el skill generado (.md) y las instrucciones para integrarlo en Claude Code (CLI)",
+      "Descarga del archivo .md desde la app"
+    ],
+    "out_of_scope": [
+      "Ejecución o runtime del skill generado",
+      "Marketplace o distribución de skills",
+      "Grabación de audio",
+      "Backend Python/Flask (toda la lógica va en el proceso main de Electron)",
+      "Autenticación de usuarios",
+      "Base de datos (no hay persistencia entre sesiones en esta versión)"
+    ]
+  },
+
+  "user_journeys": [
+    {
+      "id": "UJ-01",
+      "name": "Grabar y generar skill completo",
+      "actor": "Usuario final",
+      "steps": [
+        "Usuario abre Parrot — ve la pantalla Home con el botón 'Iniciar grabación'",
+        "Presiona 'Iniciar grabación' — la app comienza a capturar la pantalla",
+        "Mientras graba, realiza su flujo de trabajo habitual haciendo clicks",
+        "La app captura automáticamente un screenshot en cada click (sin interrumpir al usuario)",
+        "Presiona 'Detener y Analizar' — la grabación finaliza",
+        "La app muestra una pantalla de carga mientras envía los frames a Claude (Agente 1)",
+        "Aparece la pantalla de Análisis con: resumen del workflow detectado + 3 preguntas de clarificación",
+        "El usuario responde cada pregunta con Sí / No / o escribe un comentario libre",
+        "Presiona 'Generar Skill' — la app envía todo al segundo agente de Claude",
+        "Aparece una pantalla de carga mientras Claude genera el skill",
+        "Se muestra la pantalla de Resultado con el contenido del skill (.md) y las instrucciones para instalarlo en Claude Code",
+        "El usuario instala el skill automáticamente en ~/.claude/skills/ o descarga el archivo .md"
+      ]
+    },
+    {
+      "id": "UJ-02",
+      "name": "Cancelar grabación sin analizar",
+      "actor": "Usuario final",
+      "steps": [
+        "Usuario inicia una grabación",
+        "Presiona 'Cancelar' — la grabación se descarta sin enviar nada a Claude",
+        "La app vuelve a la pantalla Home"
+      ]
+    }
+  ],
+
+  "use_cases": [
+    {
+      "id": "UC-01",
+      "name": "Captura de clicks durante grabación",
+      "description": "Durante una sesión activa de grabación, cada vez que el usuario hace click en cualquier parte de la pantalla, la app captura: un screenshot del frame actual del video, las coordenadas del click (x, y), un timestamp relativo desde el inicio de la grabación, y el número de secuencia del evento."
+    },
+    {
+      "id": "UC-02",
+      "name": "Análisis de workflow con Agente 1",
+      "description": "Al detener la grabación, la app prepara un payload con los screenshots de clicks (como imágenes base64) y metadata de cada evento. Lo envía al Claude API con un prompt de sistema que instruye al agente a analizar el workflow y retornar un JSON estructurado con: nombre y descripción del workflow detectado, lista de pasos semánticos identificados, variables o inputs detectados, y exactamente 3 preguntas de clarificación."
+    },
+    {
+      "id": "UC-03",
+      "name": "Respuesta del usuario a preguntas de clarificación",
+      "description": "La pantalla de análisis presenta las 3 preguntas generadas por Claude. Cada pregunta tiene tres opciones de respuesta: botón 'Sí', botón 'No', o campo de texto libre para un comentario. El usuario puede cambiar su respuesta antes de enviar."
+    },
+    {
+      "id": "UC-04",
+      "name": "Generación del skill con Agente 2",
+      "description": "Con el análisis previo y las respuestas del usuario, la app arma un nuevo payload y lo envía a un segundo llamado a Claude API. El agente produce un archivo .md con el skill embebido en un bloque YAML (estructura: name, version, description, context, steps, inputs, outputs). El .md es el formato nativo de skills de Claude Code. El resultado se muestra en la app, se puede instalar directamente en ~/.claude/skills/ o descargar."
+    },
+    {
+      "id": "UC-05",
+      "name": "Instrucciones de integración con Claude Code (CLI)",
+      "description": "Junto al skill generado, la app detecta si ~/.claude/skills/ existe y muestra instrucciones para instalar el skill directamente ahí. Si la ruta existe, ofrece un botón 'Instalar automáticamente' que copia el .md a ~/.claude/skills/<skill-name>.md. Si no existe, muestra instrucciones manuales con la ruta exacta. Una vez instalado, el usuario puede invocar el skill con /<skill-name> desde cualquier sesión de Claude Code."
+    }
+  ],
+
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "given": "El usuario está en la pantalla de grabación activa",
+      "when": "Hace un click en cualquier parte de su pantalla",
+      "then": "La app registra el evento internamente (screenshot del frame, coordenadas, timestamp) sin interrumpir la grabación ni mostrar ninguna UI intrusiva"
+    },
+    {
+      "id": "AC-02",
+      "given": "El usuario presiona 'Detener y Analizar'",
+      "when": "La grabación tenía al menos 1 click capturado",
+      "then": "La app navega a una pantalla de análisis con spinner de carga mientras envía los datos a Claude"
+    },
+    {
+      "id": "AC-03",
+      "given": "Claude (Agente 1) retorna el análisis",
+      "when": "El JSON de respuesta es válido",
+      "then": "La pantalla muestra el resumen del workflow y exactamente 3 preguntas con sus controles de respuesta (Sí / No / Comentario)"
+    },
+    {
+      "id": "AC-04",
+      "given": "El usuario respondió las 3 preguntas y presiona 'Generar Skill'",
+      "when": "Claude (Agente 2) retorna el skill",
+      "then": "La pantalla de resultado muestra el contenido YAML del skill con syntax highlighting y un botón de descarga"
+    },
+    {
+      "id": "AC-05",
+      "given": "El skill fue generado",
+      "when": "El usuario hace click en 'Descargar .md'",
+      "then": "Se descarga un archivo <nombre-del-skill>.md con el contenido del skill al sistema de archivos (formato .md compatible con Claude Code)"
+    },
+    {
+      "id": "AC-05b",
+      "given": "El skill fue generado y ~/.claude/skills/ existe en el sistema del usuario",
+      "when": "El usuario hace click en 'Instalar automáticamente'",
+      "then": "El skill se copia como <nombre-del-skill>.md en ~/.claude/skills/ y se muestra confirmación con la ruta exacta donde quedó instalado"
+    },
+    {
+      "id": "AC-05c",
+      "given": "~/.claude/skills/ NO existe en el sistema del usuario",
+      "when": "Se renderiza SCR-06",
+      "then": "Se oculta el botón 'Instalar automáticamente' y se muestran instrucciones manuales: 1) mkdir -p ~/.claude/skills/, 2) copiar el archivo ahí, 3) invocar con /<skill-name> en Claude Code"
+    },
+    {
+      "id": "AC-06",
+      "given": "Falla la llamada a Claude API (red, key inválida, timeout)",
+      "when": "En cualquiera de los dos agentes",
+      "then": "La app muestra un mensaje de error claro con opción de reintentar"
+    },
+    {
+      "id": "AC-07",
+      "given": "El usuario presiona 'Cancelar' durante la grabación",
+      "when": "En cualquier momento antes de presionar 'Detener y Analizar'",
+      "then": "Los datos capturados se descartan y la app regresa a Home sin llamar a la API"
+    }
+  ],
+
+  "ux_behavior": {
+    "screens": [
+      {
+        "id": "SCR-01",
+        "name": "Home",
+        "description": "Pantalla existente con botón 'Iniciar grabación'. Sin cambios."
+      },
+      {
+        "id": "SCR-02",
+        "name": "Recording",
+        "description": "Pantalla existente con HUD de grabación. Se agrega un segundo botón 'Detener y Analizar' (violet) junto al botón 'Cancelar' (rojo). Un contador sutil muestra cuántos clicks fueron capturados (ej: '5 clicks capturados')."
+      },
+      {
+        "id": "SCR-03",
+        "name": "Analyzing",
+        "description": "Pantalla de carga con spinner y texto 'Analizando workflow...' mientras se espera respuesta del Agente 1. Muestra el número de frames enviados."
+      },
+      {
+        "id": "SCR-04",
+        "name": "Analysis Result",
+        "description": "Muestra: (1) Sección 'Workflow detectado' con nombre, descripción y lista de pasos. (2) Sección '3 preguntas' donde cada pregunta tiene botones Sí/No y un campo de texto opcional. (3) Botón 'Generar Skill' al pie (deshabilitado hasta que se responda al menos Sí o No en cada pregunta)."
+      },
+      {
+        "id": "SCR-05",
+        "name": "Generating",
+        "description": "Pantalla de carga con spinner y texto 'Generando skill...' mientras se espera respuesta del Agente 2."
+      },
+      {
+        "id": "SCR-06",
+        "name": "Skill Result",
+        "description": "Muestra: (1) Nombre del skill generado con badge de versión. (2) Bloque de código con el contenido del .md (scroll, fuente monospace, syntax highlighting). (3) Sección 'Instalar en Claude Code' con: detección automática de ~/.claude/skills/, botón 'Instalar automáticamente' si la ruta existe, o instrucciones manuales si no se detecta. (4) Instrucción de uso: 'Invocá el skill con /<skill-name> en cualquier sesión de Claude Code'. (5) Botón 'Descargar .md'. (6) Botón 'Nueva grabación' para reiniciar el flujo."
+      }
+    ],
+    "design_principles": [
+      "Mantener el estilo visual existente (dark, violet/red, JetBrains Mono, esquinas cuadradas)",
+      "Los spinners de carga deben ser acordes al estilo — no usar spinners genéricos del browser",
+      "Las preguntas deben ser legibles y con buena tipografía — son el momento más importante del flujo para el usuario",
+      "El contenido del .md (bloque YAML del skill) debe mostrarse con syntax highlighting: keys en violet, strings en verde, comments en gris"
+    ]
+  },
+
+  "business_rules": [
+    {
+      "id": "BR-01",
+      "rule": "Se captura exactamente 1 screenshot por evento de click, no por frame del video ni por intervalo de tiempo"
+    },
+    {
+      "id": "BR-02",
+      "rule": "El Agente 1 SIEMPRE debe retornar exactamente 3 preguntas, ni más ni menos"
+    },
+    {
+      "id": "BR-03",
+      "rule": "Cada pregunta puede responderse con Sí, No, o un comentario de texto libre. Las tres opciones son excluyentes por pregunta pero todas son válidas."
+    },
+    {
+      "id": "BR-04",
+      "rule": "El skill generado por el Agente 2 sigue el formato YAML estándar definido en screen-to-ai-skill.md: name, version, description, context (apps, preconditions), steps (con id, action, target, description), inputs, outputs"
+    },
+    {
+      "id": "BR-05",
+      "rule": "La API key de Anthropic se lee de una variable de entorno ANTHROPIC_API_KEY. Si no está presente, se muestra un error al intentar analizar."
+    },
+    {
+      "id": "BR-06",
+      "rule": "Si no se capturaron clicks durante la grabación, el botón 'Detener y Analizar' está deshabilitado — solo se puede cancelar."
+    }
+  ]
+}

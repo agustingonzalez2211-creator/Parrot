@@ -1,0 +1,248 @@
+{
+  "feature_id": "screen-to-skill",
+  "spec_type": "todos",
+  "version": "1.0.0",
+  "date": "2026-04-14",
+  "based_on": "technical-spec.json v1.0.0",
+
+  "tasks": [
+    {
+      "id": "T01",
+      "phase": 1,
+      "title": "Crear src/ai/types.ts con todas las interfaces TypeScript",
+      "owner_role": "developer",
+      "status": "pending",
+      "parallelizable": false,
+      "depends_on": [],
+      "outputs": ["src/ai/types.ts"],
+      "exit_criteria": "El archivo exporta: CapturedFrame, WorkflowAnalysis, ClarifyingQuestion, DetectedStep, DetectedInput, UserAnswer, SkillOutput, AnalyzeWorkflowPayload, GenerateSkillPayload",
+      "notes": "Este archivo es la única fuente de verdad de los tipos. No agregar lógica, solo types/interfaces."
+    },
+    {
+      "id": "T02",
+      "phase": 1,
+      "title": "Agregar captura de frames por click en renderer.ts",
+      "owner_role": "developer",
+      "status": "pending",
+      "parallelizable": false,
+      "depends_on": ["T01"],
+      "outputs": ["src/renderer/renderer.ts (modificado)"],
+      "exit_criteria": "Cada click durante grabación agrega un CapturedFrame al array capturedFrames[]. El frame contiene imagen JPEG base64 (max 1280x720, quality 0.7), coordenadas x/y/pct, timestamp_ms, seq. Verificable en consola con console.log('[parrot] frame captured', seq, timestamp_ms)",
+      "notes": "Usar OffscreenCanvas o un canvas oculto para extraer el frame del <video>. En modo simulación, capturar el <canvas> de simulación. Agregar la función captureFrame() y el event listener 'click' en document (solo cuando isRecording === true)."
+    },
+    {
+      "id": "T03",
+      "phase": 1,
+      "title": "Agregar botón 'Detener y Analizar' y contador de clicks en el HUD de grabación",
+      "owner_role": "developer",
+      "status": "pending",
+      "parallelizable": false,
+      "depends_on": ["T02"],
+      "outputs": ["src/renderer/index.html (modificado)"],
+      "exit_criteria": "El HUD de grabación tiene: (1) Botón 'Detener y Analizar' visible, deshabilitado si capturedFrames.length === 0, enabled si hay >= 1 frame. (2) Texto dinámico '0 clicks' que se actualiza en tiempo real. El botón 'Cancelar' sigue funcionando igual.",
+      "notes": "Mantener el estilo visual existente — botón violet para 'Detener y Analizar', mantener rojo para 'Cancelar'. Agregar id='btn-stop-analyze' y id='click-counter'."
+    },
+    {
+      "id": "T04",
+      "phase": 2,
+      "title": "Crear src/ai/agent1-analyzer.ts",
+      "owner_role": "developer",
+      "status": "pending",
+      "parallelizable": false,
+      "depends_on": ["T01"],
+      "outputs": ["src/ai/agent1-analyzer.ts"],
+      "exit_criteria": "Exporta una función async analyzeWorkflow(payload: AnalyzeWorkflowPayload): Promise<WorkflowAnalysis>. Usa @anthropic-ai/sdk para llamar a claude-opus-4-6 con las imágenes como content blocks tipo image. Parsea el JSON de respuesta. Si el JSON es inválido, reintenta una vez con mensaje de corrección. Valida que clarifying_questions.length === 3.",
+      "notes": "System prompt y user message template definidos en technical-spec.json sección claude_api_integration.agent_1_workflow_analyzer. Samplear frames si payload.frames.length > 15 (distribuir uniformemente). Loggear [parrot:agent1] antes y después de la llamada."
+    },
+    {
+      "id": "T05",
+      "phase": 2,
+      "title": "Agregar IPC handlers en main.ts: analyze-workflow y get-api-key-status",
+      "owner_role": "developer",
+      "status": "pending",
+      "parallelizable": false,
+      "depends_on": ["T04"],
+      "outputs": ["src/main.ts (modificado)"],
+      "exit_criteria": "ipcMain.handle('analyze-workflow') llama a analyzeWorkflow y retorna WorkflowAnalysis o lanza error. ipcMain.handle('get-api-key-status') retorna !!process.env.ANTHROPIC_API_KEY.",
+      "notes": "Importar analyzeWorkflow desde src/ai/agent1-analyzer. Wrappear en try/catch y relanzar el error para que el renderer lo reciba."
+    },
+    {
+      "id": "T06",
+      "phase": 2,
+      "title": "Exponer analyzeWorkflow y getApiKeyStatus en preload.ts",
+      "owner_role": "developer",
+      "status": "pending",
+      "parallelizable": false,
+      "depends_on": ["T05"],
+      "outputs": ["src/preload.ts (modificado)"],
+      "exit_criteria": "parrotAPI expone: analyzeWorkflow(payload) → Promise<WorkflowAnalysis> y getApiKeyStatus() → Promise<boolean>. Los métodos existentes (getSources, saveRecording) no se modifican.",
+      "notes": "Actualizar también la interface Window declarada al inicio de renderer.ts para incluir los nuevos métodos."
+    },
+    {
+      "id": "T07",
+      "phase": 2,
+      "title": "Crear pantalla SCR-03 (Analyzing) en index.html",
+      "owner_role": "developer",
+      "status": "pending",
+      "parallelizable": true,
+      "depends_on": ["T03"],
+      "outputs": ["src/renderer/index.html (modificado)"],
+      "exit_criteria": "Existe un div #screen-analyzing (display:none por defecto) con: spinner animado estilo existente, texto 'Analizando workflow...', texto dinámico 'Enviando N frames a Claude'. Estilos inline en el bloque <style> existente.",
+      "notes": "El spinner debe usar la paleta de colores existente (violet). No usar librerías externas."
+    },
+    {
+      "id": "T08",
+      "phase": 2,
+      "title": "Crear pantalla SCR-04 (Analysis Result) en index.html",
+      "owner_role": "developer",
+      "status": "pending",
+      "parallelizable": true,
+      "depends_on": ["T03"],
+      "outputs": ["src/renderer/index.html (modificado)"],
+      "exit_criteria": "Existe div #screen-analysis-result con: sección 'Workflow detectado' (nombre, descripción, lista de pasos), sección '3 preguntas' donde cada pregunta tiene botones Sí/No y textarea opcional, botón 'Generar Skill' deshabilitado hasta que todas las preguntas tengan respuesta (sí, no, o texto en textarea).",
+      "notes": "Los botones Sí/No deben tener estado visual activo (violet highlight) cuando están seleccionados. El textarea es opcional — si el usuario escribe ahí, eso sobreescribe Sí/No como la respuesta."
+    },
+    {
+      "id": "T09",
+      "phase": 2,
+      "title": "Conectar flujo Detener→Analyzing→AnalysisResult en renderer.ts",
+      "owner_role": "developer",
+      "status": "pending",
+      "parallelizable": false,
+      "depends_on": ["T06", "T07", "T08"],
+      "outputs": ["src/renderer/renderer.ts (modificado)"],
+      "exit_criteria": "Al presionar 'Detener y Analizar': (1) se detiene la grabación, (2) se muestra SCR-03, (3) se llama parrotAPI.analyzeWorkflow con los frames sampleados, (4) al recibir respuesta se pueblan los elementos del SCR-04 con los datos del WorkflowAnalysis y se muestra esa pantalla. En caso de error se muestra mensaje con botón de retry.",
+      "notes": "Implementar una función centralizada showScreen(screenId) que oculta todas las pantallas y muestra la indicada. Función populateAnalysisResult(analysis: WorkflowAnalysis) que rellena el HTML del SCR-04."
+    },
+    {
+      "id": "T10",
+      "phase": 3,
+      "title": "Crear src/ai/agent2-generator.ts",
+      "owner_role": "developer",
+      "status": "pending",
+      "parallelizable": false,
+      "depends_on": ["T01"],
+      "outputs": ["src/ai/agent2-generator.ts"],
+      "exit_criteria": "Exporta async generateSkill(analysis: WorkflowAnalysis, answers: UserAnswer[]): Promise<SkillOutput>. Llama a claude-opus-4-6 con el prompt de texto (sin imágenes). Parsea el JSON. Reintenta una vez si el JSON es inválido. El skill_content del output es un string .md válido (título markdown + bloque YAML del skill).",
+      "notes": "System prompt y user message template definidos en technical-spec.json sección claude_api_integration.agent_2_skill_generator. Loggear [parrot:agent2] antes y después de la llamada."
+    },
+    {
+      "id": "T11",
+      "phase": 3,
+      "title": "Agregar IPC handlers en main.ts: generate-skill, save-skill-file, install-skill, check-claude-code-path",
+      "owner_role": "developer",
+      "status": "pending",
+      "parallelizable": false,
+      "depends_on": ["T10"],
+      "outputs": ["src/main.ts (modificado)"],
+      "exit_criteria": "ipcMain.handle('generate-skill') retorna SkillOutput. ipcMain.handle('save-skill-file') abre dialog.showSaveDialog con filtro .md y escribe el archivo. ipcMain.handle('install-skill') copia el contenido a path.join(os.homedir(), '.claude/skills/', skillName + '.md'). ipcMain.handle('check-claude-code-path') retorna boolean según si ~/.claude/skills/ existe.",
+      "notes": "Importar { dialog } de electron, fs/promises y os de node. defaultPath del dialog: <skill_name>.md. La ruta de instalación es siempre ~/.claude/skills/ independiente del OS (Claude Code usa el home del usuario)."
+    },
+    {
+      "id": "T12",
+      "phase": 3,
+      "title": "Exponer generateSkill, saveSkillFile, installSkill y checkClaudeCodePath en preload.ts",
+      "owner_role": "developer",
+      "status": "pending",
+      "parallelizable": false,
+      "depends_on": ["T11"],
+      "outputs": ["src/preload.ts (modificado)"],
+      "exit_criteria": "parrotAPI expone: generateSkill(payload) → Promise<SkillOutput>, saveSkillFile(content, filename) → Promise<void>, installSkill(content, skillName) → Promise<void>, checkClaudeCodePath() → Promise<boolean>. Actualizar interface Window en renderer.ts.",
+      "notes": ""
+    },
+    {
+      "id": "T13",
+      "phase": 3,
+      "title": "Crear pantalla SCR-05 (Generating) en index.html",
+      "owner_role": "developer",
+      "status": "pending",
+      "parallelizable": true,
+      "depends_on": ["T08"],
+      "outputs": ["src/renderer/index.html (modificado)"],
+      "exit_criteria": "Existe div #screen-generating con spinner y texto 'Generando skill...'.",
+      "notes": "Puede reutilizar los mismos estilos del spinner del SCR-03."
+    },
+    {
+      "id": "T14",
+      "phase": 3,
+      "title": "Crear pantalla SCR-06 (Skill Result) en index.html",
+      "owner_role": "developer",
+      "status": "pending",
+      "parallelizable": true,
+      "depends_on": ["T08"],
+      "outputs": ["src/renderer/index.html (modificado)"],
+      "exit_criteria": "Existe div #screen-skill-result con: (1) nombre del skill y badge versión, (2) bloque de código con el contenido del skill (scrollable, fuente monospace, syntax coloring básico), (3) sección 'Instalar en Claude Code' que muestra: botón 'Instalar automáticamente' si checkClaudeCodePath() retorna true (con la ruta ~/.claude/skills/<skill-name>.md), o instrucciones manuales si retorna false. (4) Texto de uso: 'Invocá con /<skill-name> en Claude Code'. (5) Botón 'Descargar .md'. (6) Botón 'Nueva grabación'.",
+      "notes": "Al cargar SCR-06, llamar parrotAPI.checkClaudeCodePath() para mostrar u ocultar el botón de instalación automática. Para el syntax highlighting, colorear con regex simples: keys en violet, strings en verde, comments en gris — sin librerías externas."
+    },
+    {
+      "id": "T15",
+      "phase": 3,
+      "title": "Conectar flujo Generar→Generating→SkillResult en renderer.ts",
+      "owner_role": "developer",
+      "status": "pending",
+      "parallelizable": false,
+      "depends_on": ["T12", "T13", "T14"],
+      "outputs": ["src/renderer/renderer.ts (modificado)"],
+      "exit_criteria": "Al presionar 'Generar Skill': (1) se recolectan las UserAnswers del formulario, (2) se muestra SCR-05, (3) se llama parrotAPI.generateSkill, (4) al recibir respuesta se llama checkClaudeCodePath y se puebla SCR-06. Botón 'Instalar automáticamente' llama parrotAPI.installSkill y muestra confirmación con la ruta. Botón 'Descargar .md' llama parrotAPI.saveSkillFile. Botón 'Nueva grabación' reinicia toda la sesión (limpiar capturedFrames, volver a SCR-01).",
+      "notes": "Función collectAnswers() que lee el estado de los botones Sí/No y textareas del SCR-04. Función populateSkillResult(skill: SkillOutput) que rellena el HTML del SCR-06."
+    },
+    {
+      "id": "T16",
+      "phase": 4,
+      "title": "Implementar manejo de errores en todas las pantallas",
+      "owner_role": "developer",
+      "status": "pending",
+      "parallelizable": false,
+      "depends_on": ["T09", "T15"],
+      "outputs": ["src/renderer/index.html (modificado)", "src/renderer/renderer.ts (modificado)"],
+      "exit_criteria": "Todos los casos de error de technical-spec.json sección error_handling tienen manejo en la UI: API key faltante muestra banner, errores de red muestran pantalla de error con retry, error de 0 clicks deshabilita el botón con tooltip.",
+      "notes": "Agregar div #screen-error genérico con mensaje dinámico y botón de acción. Las pantallas de carga (SCR-03, SCR-05) manejan el catch del await."
+    },
+    {
+      "id": "T17",
+      "phase": 4,
+      "title": "Verificar flujo completo end-to-end y corregir edge cases",
+      "owner_role": "developer",
+      "status": "pending",
+      "parallelizable": false,
+      "depends_on": ["T16"],
+      "outputs": [],
+      "exit_criteria": "Los 6 test cases manuales de testing_strategy pasan sin errores. El flujo de cancelación en cualquier punto de la app regresa a Home limpiando el estado.",
+      "notes": "Correr pnpm start y ejecutar cada MT-01 a MT-06. Documentar en consola cualquier issue encontrado."
+    }
+  ],
+
+  "execution_batches": [
+    {
+      "batch": 1,
+      "description": "Fundamentos — tipos y captura de frames",
+      "parallel_tasks": ["T01"],
+      "sequential_after": ["T02", "T03"]
+    },
+    {
+      "batch": 2,
+      "description": "Agente 1 — análisis de workflow",
+      "parallel_tasks": ["T04"],
+      "sequential_after": ["T05", "T06"],
+      "parallel_then": ["T07", "T08"],
+      "sequential_after_2": ["T09"]
+    },
+    {
+      "batch": 3,
+      "description": "Agente 2 — generación del skill",
+      "parallel_tasks": ["T10"],
+      "sequential_after": ["T11", "T12"],
+      "parallel_then": ["T13", "T14"],
+      "sequential_after_2": ["T15"]
+    },
+    {
+      "batch": 4,
+      "description": "Pulido y error handling",
+      "sequential": ["T16", "T17"]
+    }
+  ],
+
+  "total_tasks": 17,
+  "parallelizable_tasks": ["T07", "T08", "T13", "T14"],
+  "critical_path": ["T01", "T02", "T03", "T04", "T05", "T06", "T09", "T10", "T11", "T12", "T15", "T16", "T17"]
+}

@@ -4,7 +4,7 @@
   "description": "Screen-to-AI-Skill Generator",
   "main": "dist/main.js",
   "scripts": {
-    "build": "tsc && node_modules/.bin/esbuild src/renderer/renderer.ts --bundle --outfile=dist/renderer/renderer.js --platform=browser && cp src/renderer/index.html dist/renderer/index.html",
+    "build": "tsc && node_modules/.bin/esbuild src/renderer/renderer.ts --bundle --outfile=dist/renderer/renderer.js --platform=browser && cp src/renderer/index.html dist/renderer/index.html && cp src/renderer/overlay.html dist/renderer/overlay.html",
     "start": "pnpm build && ELECTRON_OZONE_PLATFORM_HINT=x11 electron .",
     "dev": "tsc --watch & sleep 2 && electron . --enable-logging"
   },
@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
+    "dotenv": "^17.4.2",
     "electron": "^36.0.0",
     "playwright": "^1.50.0",
     "yaml": "^2.7.0"
