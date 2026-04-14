@@ -1,51 +1,51 @@
-<div align="center">
+<div alinear="centro">
 
-<img src="assets/logo.png" alt="Parrot Logo" width="400" />
+<img src="activos/logotipo.png" alt=„Logotipo del loro" ancho="600" />
 
-# PARROT
+# LORO
 
-### *Record once. Automate forever.*
+### *Graba una vez. Automatizar para siempre.*
 
-**Turn screen recordings into AI-executable skills — no code required.**
+**Conviérta grabaciones de pantalla en habilidades ejecutables por IA — no se requiere código.**
 
-[![Electron](https://img.shields.io/badge/Electron-36.0-47848F?style=flat-square&logo=electron&logoColor=white)](https://www.electronjs.org/)
+[![Electrón](https://img.shields.io/badge/Electron-36.0-47848F?style=flat-square&logo=electron&logoColor=white)](https://www.electronjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Claude](https://img.shields.io/badge/Claude-Opus_4.6-D97757?style=flat-square)](https://anthropic.com)
-[![License](https://img.shields.io/badge/License-MIT-22c55e?style=flat-square)](LICENSE)
+[![Licencia](https://img.shields.io/badge/License-MIT-22c55e?style=flat-square)](LICENCIA)
 
 </div>
 
 ---
 
-## What is Parrot?
+## ¿Qué es el loro?
 
-Parrot bridges the gap between **human expertise** and **AI execution**.
+El loro cierra la brecha entre **experiencia humana** y **Ejecución de IA**.
 
-You record your screen while doing any repetitive workflow. Parrot's AI pipeline — powered by Claude — watches what you did, understands it semantically, and packages it into a skill file that Claude Code can execute on demand.
+Grabas tu pantalla mientras realiza cual fluido de trabajo repetitivo. La canalización de IA de Parrot —desarrollada por Claude— observa lo que hiciste, lo entiende semánticamente y lo empaqueta en un archivo de habilidades que Claude Code puede ejecutar a pedido.
 
-**No code. No documentation. No engineering team in the middle.**
+**Sin código. Sin documentación. No hay ningún equipo de ingeniería en el medio.**
 
 ---
 
-## How it works
+## Cómo funciona
 
-```mermaid
-flowchart LR
-    A(["🎬  Record"]) --> B(["🧠  AI Analyzes"])
-    B --> C(["📦  Skill Generated"])
-    C --> D(["⚡  Claude Executes"])
+```sirena
+diagrama de flujo LR
+ A(["🎬 Registro"]) --> B(["🧠 Análisis de IA"])
+ B --> C(["📦 Habilidad generada"])
+ C --> D(["⚡ Claude ejecuta"])
 
-    style A fill:#1f2335,stroke:#8b5cf6,color:#f1f5f9
-    style B fill:#1f2335,stroke:#8b5cf6,color:#f1f5f9
-    style C fill:#1f2335,stroke:#8b5cf6,color:#f1f5f9
-    style D fill:#1f2335,stroke:#22c55e,color:#f1f5f9
+ estilo A relleno:#1f2335,trazo:#8b5cf6,color:#f1f5f9
+ estilo B relleno:#1f2335, trazo:#8b5cf6, color:#f1f5f9
+ estilo C relleno:#1f2335,trazo:#8b5cf6,color:#f1f5f9
+ estilo D relleno:#1f2335,trazo:#22c55e,color:#f1f5f9
 ```
 
-**Step 1 — Record**
-Open Parrot, press record, and just work. In any app — Chrome, Excel, your internal tools. A floating overlay stays visible so you keep control without switching windows. Parrot captures your screen at 2-second intervals automatically.
+**Paso 1 — Grabar**
+Abra Parrot, presione grabar y simple trabajo. Aplicación real — Chrome, Excel, tus herramientos internas. Una superposición flotante permanente visible para que puedas mantener el control sin cambiar de ventana. Loro captura tu pantalla a intervalos de 2 segundos automáticamente.
 
-**Step 2 — AI Analyzes (Agent 1)**
-When you stop, Parrot sends the captured frames to Claude's vision model. Claude identifies the semantic meaning of each action — not "clicked at x,y" but "opened the export menu" — extracts the steps, variables, and decision points, then asks up to 3 clarifying questions.
+Cuando te detienes, Loro enviia los fotografías capiturados al modelo de visión de Claude. Claude identifica el significado semánico de cada acción — no "hizo clic en x,y" sino "abrió el hombre de exportación" — extrae los pasos،las variables y los puntos de decisión،luego hace hasta 3 preguntas aclaratorias.Paso 2 — Análisis de IA (Agente 1)**
+Cuando te detienes, Loro enviia los fotografías capiturados al modelo de visión de Claude. Claude identifica el significado semánico de cada acción — no "hizo clic en x,y" sino "abrió el hombre de exportación" — extrae los pasos،las variables y los puntos de decisión،luego hace hasta 3 preguntas aclaratorias.
 
 **Step 3 — Skill Generated (Agent 2)**
 A second Claude agent takes the analysis and your answers and generates a structured `SKILL.md` file: a portable, executable document Claude Code can load and run. One click installs it to `~/.claude/skills/`.
