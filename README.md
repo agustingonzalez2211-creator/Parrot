@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/logo.png" alt="Parrot Logo" width="120" />
+<img src="assets/logo.png" alt="Parrot Logo" width="400" />
 
 # PARROT
 
