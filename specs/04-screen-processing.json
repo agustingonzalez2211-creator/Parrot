@@ -1,0 +1,172 @@
+{
+  "screen": "processing",
+  "id": "screen-processing",
+  "title": "ANALYZING",
+  "description": "AI analysis of the recorded video. Three sequential phases with animated progress bars and a live activity log. Auto-advances to validation when complete.",
+
+  "layout": {
+    "type": "column",
+    "background": "dot-grid (#030012 + border-vis dots 20px)",
+    "children": ["proc-wrap"]
+  },
+
+  "components": {
+    "proc-wrap": {
+      "type": "centered-column",
+      "flex": 1,
+      "padding": 40,
+      "gap": 24,
+      "max-width": 560,
+      "margin": "0 auto",
+      "children": [
+        "proc-logo",
+        "proc-title",
+        "proc-phases",
+        "proc-log",
+        "proc-stats"
+      ]
+    },
+
+    "proc-logo": {
+      "type": "image",
+      "src": "logo.png",
+      "size": 64,
+      "rendering": "pixelated"
+    },
+
+    "proc-title": {
+      "type": "text",
+      "font": "Syne",
+      "size": 20,
+      "weight": 700,
+      "color": "text-dis2",
+      "value": "Analyzing recording..."
+    },
+
+    "proc-phases": {
+      "type": "progress-group",
+      "max-width": 520,
+      "gap": 12,
+      "phases": [
+        {
+          "id": "load",
+          "label": "Load",
+          "pct-id": "pct-load",
+          "fill-id": "fill-load",
+          "initial": 100,
+          "color": "success",
+          "auto-done": true
+        },
+        {
+          "id": "detect",
+          "label": "Detect Interactions",
+          "pct-id": "pct-detect",
+          "fill-id": "fill-detect",
+          "duration-ms": 4000,
+          "color": "accent",
+          "done-color": "success"
+        },
+        {
+          "id": "build",
+          "label": "Build Skill",
+          "pct-id": "pct-build",
+          "fill-id": "fill-build",
+          "duration-ms": 3000,
+          "starts-after": "detect",
+          "color": "accent",
+          "done-color": "success"
+        }
+      ]
+    },
+
+    "proc-phase-item": {
+      "type": "progress-bar",
+      "children": {
+        "header": {
+          "layout": "row space-between",
+          "label": { "font": "Syne Mono", "size": 10, "color": "text-sec" },
+          "pct":   { "font": "Syne Mono", "size": 11, "color": "text-pri", "live": true }
+        },
+        "track": {
+          "height": 4,
+          "background": "border",
+          "border-radius": 2,
+          "fill": {
+            "background": "accent",
+            "transition": "width 0.4s ease-out",
+            "done-class": "done → background: success"
+          }
+        }
+      }
+    },
+
+    "proc-log": {
+      "type": "log-panel",
+      "max-width": 520,
+      "background": "surface",
+      "border": "border",
+      "border-radius": 8,
+      "children": {
+        "header": { "text": "ACTIVITY LOG", "font": "Syne Mono", "size": 9, "color": "text-dis" },
+        "body": {
+          "id": "proc-log-body",
+          "max-height": 140,
+          "overflow": "scroll-y",
+          "gap": 2,
+          "line-font": "Syne Mono",
+          "line-size": 11,
+          "animation": "logSlide 0.25s per line",
+          "line-types": {
+            "primary":  { "prefix": "→", "color": "accent-br" },
+            "sub":      { "indent": 16, "arrow": "↳", "event-color": "accent-br" },
+            "success":  { "suffix": "DONE", "suffix-color": "success" }
+          }
+        }
+      }
+    },
+
+    "proc-stats": {
+      "type": "stat-row",
+      "gap": 40,
+      "stats": [
+        { "label": "ELAPSED", "id": "proc-elapsed", "font": "Doto", "size": 28, "format": "MM:SS", "live": true },
+        { "label": "STEPS",   "id": "proc-steps",   "font": "Doto", "size": 28, "live": true },
+        { "label": "FRAMES",  "id": "proc-frames",  "font": "Doto", "size": 28, "format": "{n}%", "live": true }
+      ]
+    }
+  },
+
+  "behavior": {
+    "on-enter": [
+      "resetPhases()",
+      "startElapsedTimer()",
+      "runPhase('detect', 4000ms)",
+      "then runPhase('build', 3000ms)",
+      "then wait 800ms",
+      "then goTo('processing','validation',1)"
+    ],
+    "log-sequence": [
+      "→ DETECTING INTERACTIONS...",
+      "  ↳ CLICK at (420,280) t=1.2s",
+      "  ↳ NAVIGATE /checkout t=3.4s",
+      "  ↳ TYPE input#email t=5.1s",
+      "  ↳ CLICK .btn-place-order t=8.7s",
+      "→ CLUSTERING STEPS...",
+      "→ EXTRACTING SELECTORS...",
+      "→ INFERRING INTENT WITH AI...",
+      "  ↳ STEP 1: Navigate to store",
+      "  ↳ STEP 2: Add product to cart",
+      "  ↳ STEP 3: Proceed to checkout",
+      "  ↳ STEP 4: Fill shipping info",
+      "→ GENERATING YAML SKILL...",
+      "→ [success] SKILL READY · 12 STEPS EXTRACTED"
+    ]
+  },
+
+  "navigation": {
+    "back": "library",
+    "forward": [
+      { "trigger": "auto-complete", "to": "validation" }
+    ]
+  }
+}

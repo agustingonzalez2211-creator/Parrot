@@ -1,0 +1,157 @@
+{
+  "screen": "recording",
+  "id": "screen-recording",
+  "title": "RECORDING",
+  "description": "Full-screen overlay while capturing. Shows live timer, event counter, and detection feed. position:fixed z-index:100 to cover the entire window including topbar.",
+
+  "layout": {
+    "type": "column",
+    "position": "fixed",
+    "inset": 0,
+    "z-index": 100,
+    "children": ["rec-hud", "rec-viewport"]
+  },
+
+  "components": {
+    "rec-hud": {
+      "type": "hud-bar",
+      "height": 56,
+      "background": "rgba(3,0,18,0.92)",
+      "border": "bottom border-vis",
+      "backdrop-filter": "blur(8px)",
+      "layout": "row gap-12 align-center",
+      "padding": "0 16px",
+      "children": {
+        "rec-badge": {
+          "type": "badge",
+          "background": "rec-sub",
+          "border": "rgba(215,25,33,0.35)",
+          "border-radius": 999,
+          "padding": "5px 12px",
+          "children": {
+            "dot":   { "type": "dot", "size": 7, "color": "rec", "animation": "blink 1.2s infinite" },
+            "label": { "font": "Syne Mono", "size": 10, "text": "REC", "color": "rec", "letter-spacing": "0.14em" }
+          }
+        },
+        "timer": {
+          "type": "display",
+          "id": "rec-timer",
+          "font": "Doto",
+          "size": 28,
+          "color": "text-dis2",
+          "format": "MM:SS",
+          "live": true
+        },
+        "skill-name": {
+          "type": "text",
+          "id": "rec-skill-name",
+          "font": "Syne Mono",
+          "size": 11,
+          "color": "text-sec",
+          "flex": 1,
+          "text-align": "center",
+          "value": "source-name from previous screen"
+        },
+        "event-count": {
+          "type": "text",
+          "id": "rec-events",
+          "font": "Syne Mono",
+          "size": 10,
+          "color": "text-dis",
+          "format": "{n} EVENTS",
+          "live": true,
+          "min-width": 120,
+          "text-align": "right"
+        },
+        "btn-stop": {
+          "type": "button",
+          "variant": "rec-outline",
+          "id": "btn-stop",
+          "icon": "icon-stop",
+          "label": "STOP",
+          "on-click": "stopRecording(); goTo('recording','processing',1)"
+        },
+        "btn-cancel": {
+          "type": "button",
+          "variant": "ghost-text",
+          "id": "btn-cancel-rec",
+          "label": "✕ CANCEL",
+          "on-click": "cancelRecording(); goTo('recording','source',-1)"
+        }
+      }
+    },
+
+    "rec-viewport": {
+      "type": "viewport",
+      "flex": 1,
+      "background": "#080910",
+      "overflow": "hidden",
+      "effects": {
+        "scanlines": "repeating-linear-gradient — 2px grid overlay",
+        "scan-sweep": "animated horizontal line, accent color, 5s loop"
+      },
+      "children": {
+        "sim-canvas": {
+          "type": "canvas",
+          "id": "sim-canvas",
+          "description": "Fake OS simulation rendered when desktopCapturer is unavailable",
+          "default": "hidden — shown only in simulation fallback"
+        },
+        "preview": {
+          "type": "video",
+          "id": "preview",
+          "muted": true,
+          "autoplay": true,
+          "description": "Real screen capture stream from MediaRecorder",
+          "default": "hidden — shown when stream available"
+        },
+        "live-feed": {
+          "type": "panel",
+          "class": "rec-feed",
+          "position": "absolute bottom-right",
+          "offset": "16px",
+          "width": 260,
+          "background": "rgba(3,0,18,0.88)",
+          "border": "border-vis",
+          "border-radius": 8,
+          "children": {
+            "header": { "text": "LIVE DETECTION", "font": "Syne Mono", "size": 9, "color": "text-dis" },
+            "body": {
+              "id": "feed-body",
+              "type": "log-stream",
+              "max-lines": 20,
+              "scroll": "auto-bottom",
+              "line-format": "{timestamp} {event-type} {selector}",
+              "line-colors": { "event-type": "accent-br", "timestamp": "text-dis" },
+              "animation": "fadeIn 0.3s per line"
+            }
+          }
+        }
+      }
+    }
+  },
+
+  "behavior": {
+    "on-enter": [
+      "startTimer()",
+      "startFeed()",
+      "try: connectDesktopCapturer() → show preview",
+      "catch: startSimulation() → show canvas"
+    ],
+    "on-exit": [
+      "stopTimer()",
+      "stopFeed()",
+      "stopMediaRecorder()",
+      "stopSimulation()",
+      "releaseStream()"
+    ]
+  },
+
+  "navigation": {
+    "back": null,
+    "forward": [
+      { "trigger": "btn-stop",   "to": "processing" },
+      { "trigger": "btn-cancel", "to": "source" }
+    ]
+  }
+}

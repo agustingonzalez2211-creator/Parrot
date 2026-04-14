@@ -1,0 +1,105 @@
+{
+  "screen": "source",
+  "id": "screen-source",
+  "title": "NEW SKILL · CHOOSE SOURCE",
+  "description": "Select which screen or window to record. Populated via desktopCapturer IPC.",
+
+  "layout": {
+    "type": "column",
+    "children": ["source-header", "source-grid", "source-actions"]
+  },
+
+  "components": {
+    "source-header": {
+      "type": "header",
+      "padding": "24px 24px 16px",
+      "border": "bottom",
+      "children": {
+        "label": { "font": "Syne Mono", "size": 10, "text": "CHOOSE SOURCE", "color": "text-sec" },
+        "desc":  { "font": "Syne", "size": 14, "text": "Select a screen or window to record", "color": "text-sec" }
+      }
+    },
+
+    "source-grid": {
+      "type": "grid",
+      "id": "source-grid",
+      "columns": 2,
+      "gap": 12,
+      "padding": "20px 24px",
+      "overflow": "scroll-y",
+      "flex": 1,
+      "data-source": "window.parrotAPI.getSources()",
+      "fallback": "mock-sources"
+    },
+
+    "source-card": {
+      "type": "card",
+      "border": "2px solid border",
+      "border-radius": 10,
+      "cursor": "pointer",
+      "states": {
+        "default": { "border-color": "border" },
+        "hover":   { "border-color": "border-vis" },
+        "selected": { "border-color": "accent", "background": "surface-raised" }
+      },
+      "on-click": "selectSource(idx)",
+      "children": {
+        "thumb": {
+          "type": "thumbnail",
+          "height": 140,
+          "content": "sim-bars or screenshot",
+          "background": "surface-raised"
+        },
+        "info": {
+          "padding": "10px 12px",
+          "layout": "row space-between",
+          "children": {
+            "name": { "font": "Syne", "size": 13, "weight": 600 },
+            "type": { "font": "Syne Mono", "size": 9, "color": "text-dis", "values": ["SCREEN", "WINDOW"] }
+          }
+        }
+      }
+    },
+
+    "source-actions": {
+      "type": "action-bar",
+      "padding": "16px 24px",
+      "border": "top",
+      "layout": "row end gap-10",
+      "children": {
+        "cancel": {
+          "type": "button",
+          "variant": "ghost",
+          "id": "btn-source-cancel",
+          "label": "Cancel",
+          "on-click": "goTo('source','library',-1)"
+        },
+        "start": {
+          "type": "button",
+          "variant": "primary",
+          "id": "btn-source-start",
+          "icon": "icon-rec",
+          "label": "START RECORDING",
+          "on-click": "goTo('source','recording',1)"
+        }
+      }
+    }
+  },
+
+  "navigation": {
+    "back": "library",
+    "forward": [
+      { "trigger": "btn-source-start", "to": "recording" }
+    ]
+  },
+
+  "data": {
+    "sources": {
+      "source": "parrotAPI.getSources",
+      "mock": [
+        { "id": "screen:0:0", "name": "Entire Screen",  "type": "SCREEN", "thumbnail": null },
+        { "id": "window:12345", "name": "Chrome Window", "type": "WINDOW", "thumbnail": null }
+      ]
+    }
+  }
+}

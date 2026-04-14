@@ -1,0 +1,136 @@
+{
+  "app": "ghost.",
+  "version": "0.1.0",
+  "description": "Screen-to-AI-Skill Generator — Electron desktop app",
+  "design-system": "Nothing (violet dark mode)",
+
+  "screens": [
+    "01-screen-library",
+    "02-screen-source",
+    "03-screen-recording",
+    "04-screen-processing",
+    "05-screen-validation",
+    "06-screen-detail",
+    "07-screen-share"
+  ],
+
+  "flow": {
+    "happy-path": [
+      {
+        "from": "library",
+        "to":   "source",
+        "trigger": "FAB button (+ New Skill)",
+        "dir": 1
+      },
+      {
+        "from": "source",
+        "to":   "recording",
+        "trigger": "START RECORDING button — with selected source",
+        "dir": 1
+      },
+      {
+        "from": "recording",
+        "to":   "processing",
+        "trigger": "STOP button — stops MediaRecorder + stream",
+        "dir": 1
+      },
+      {
+        "from": "processing",
+        "to":   "validation",
+        "trigger": "Auto-advance after all phases complete (800ms delay)",
+        "dir": 1
+      },
+      {
+        "from": "validation",
+        "to":   "detail",
+        "trigger": "FINISH → on last question",
+        "dir": 1
+      },
+      {
+        "from": "detail",
+        "to":   "share",
+        "trigger": "SHARE button in header",
+        "dir": 1
+      }
+    ],
+
+    "secondary-paths": [
+      {
+        "from": "library",
+        "to":   "detail",
+        "trigger": "Click on existing skill card",
+        "dir": 1,
+        "note": "goToDetail(skillId) — skips recording flow entirely"
+      }
+    ],
+
+    "back-paths": [
+      { "from": "source",     "to": "library",    "trigger": "Cancel or ← back", "dir": -1 },
+      { "from": "recording",  "to": "source",     "trigger": "✕ CANCEL button",  "dir": -1 },
+      { "from": "processing", "to": "library",    "trigger": "← back",            "dir": -1 },
+      { "from": "validation", "to": "processing", "trigger": "← BACK on Q1",      "dir": -1 },
+      { "from": "detail",     "to": "library",    "trigger": "← back",            "dir": -1 },
+      { "from": "share",      "to": "detail",     "trigger": "← BACK TO SKILL",   "dir": -1 }
+    ]
+  },
+
+  "navigation": {
+    "engine": "GSAP 3.12",
+    "transition": {
+      "type": "fade + vertical slide",
+      "out": { "autoAlpha": 0, "y": "dir * -12", "duration": 0.18, "ease": "power2.in" },
+      "in":  { "autoAlpha": 1, "y": 0, "from-y": "dir * 16", "duration": 0.22, "ease": "power2.out" }
+    },
+    "guard": "isAnimating flag — prevents double-triggers"
+  },
+
+  "topbar": {
+    "height": 48,
+    "always-visible": true,
+    "exception": "screen-recording is position:fixed z-index:100 — covers topbar",
+    "back-button": {
+      "visible-on": ["source", "processing", "validation", "detail", "share"],
+      "hidden-on":  ["library", "recording"]
+    },
+    "titles": {
+      "library":    "YOUR SKILLS",
+      "source":     "NEW SKILL · CHOOSE SOURCE",
+      "recording":  "RECORDING",
+      "processing": "ANALYZING",
+      "validation": "VALIDATE SKILL",
+      "detail":     "{skill-name}",
+      "share":      "SHARE SKILL"
+    }
+  },
+
+  "design-tokens": {
+    "fonts": {
+      "display": "Doto (dot-matrix hero numbers)",
+      "ui":      "Syne (headings, body)",
+      "mono":    "Syne Mono (ALL CAPS labels, code, metadata)"
+    },
+    "colors": {
+      "background":    "#030012",
+      "surface":       "#0D0A1A",
+      "surface-raised":"#18102E",
+      "border":        "#1E1535",
+      "border-vis":    "#2E2050",
+      "text-dis2":     "#FFFFFF",
+      "text-pri":      "#E2DCFF",
+      "text-sec":      "#8B7AAE",
+      "text-dis":      "#5A4E7A",
+      "accent":        "#7C3AED",
+      "accent-br":     "#A78BFA",
+      "rec":           "#D71921",
+      "success":       "#4A9E5C",
+      "warn":          "#D4A843"
+    }
+  },
+
+  "ipc-bridge": {
+    "preload": "parrotAPI",
+    "methods": {
+      "getSources": "desktopCapturer.getSources({ types: ['screen','window'] })"
+    }
+  }
+}

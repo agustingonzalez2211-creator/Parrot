@@ -1,0 +1,196 @@
+{
+  "screen": "share",
+  "id": "screen-share",
+  "title": "SHARE SKILL",
+  "description": "Share and export the skill. Shows a shareable link, 3 export formats (.skill, embed, claude), access toggle, and a success state after export.",
+
+  "layout": {
+    "type": "column",
+    "children": ["share-wrap"]
+  },
+
+  "components": {
+    "share-wrap": {
+      "type": "centered-column",
+      "flex": 1,
+      "padding": "32px 40px",
+      "max-width": 540,
+      "margin": "0 auto",
+      "gap": 20,
+      "children": [
+        "share-title",
+        "share-link-section",
+        "share-export-section",
+        "share-access-section",
+        "share-success",
+        "btn-back"
+      ]
+    },
+
+    "share-title": {
+      "type": "text",
+      "font": "Syne",
+      "size": 20,
+      "weight": 700,
+      "color": "text-dis2",
+      "value": "Share Skill"
+    },
+
+    "share-link-section": {
+      "type": "section",
+      "children": {
+        "label": { "type": "mono-label", "text": "SHARE LINK", "margin-bottom": 8 },
+        "link-box": {
+          "type": "link-box",
+          "background": "surface-raised",
+          "border": "border-vis",
+          "border-radius": 8,
+          "padding": "11px 14px",
+          "layout": "row space-between align-center",
+          "children": {
+            "link-text": {
+              "id": "share-link-text",
+              "font": "Syne Mono",
+              "size": 12,
+              "color": "text-sec",
+              "value": "ghost.app/s/{skill-id}"
+            },
+            "btn-copy": {
+              "id": "btn-copy",
+              "type": "button",
+              "variant": "inline-text",
+              "font": "Syne Mono",
+              "size": 10,
+              "color": "accent-br",
+              "label": "COPY",
+              "hover-color": "text-dis2",
+              "on-click": "copyLink()",
+              "feedback": {
+                "on-success": "label → 'COPIED!'",
+                "reset-after": 2000
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "share-export-section": {
+      "type": "section",
+      "children": {
+        "label": { "type": "mono-label", "text": "EXPORT OPTIONS", "margin-bottom": 10 },
+        "export-grid": {
+          "type": "grid",
+          "columns": 3,
+          "gap": 8,
+          "items": [
+            {
+              "id": "export-skill",
+              "label": ".SKILL FILE",
+              "icon": "icon-export",
+              "variant": "primary",
+              "on-click": "exportSkill('.skill')",
+              "description": "Native .skill binary format for ghost. runner"
+            },
+            {
+              "id": "export-embed",
+              "label": "EMBED",
+              "icon": "icon-share",
+              "variant": "default",
+              "on-click": "exportSkill('embed')",
+              "description": "Embeddable iframe snippet"
+            },
+            {
+              "id": "export-claude",
+              "label": "CLAUDE",
+              "icon": "icon-run",
+              "variant": "default",
+              "on-click": "exportSkill('claude')",
+              "description": "Export as Claude tool use JSON"
+            }
+          ]
+        }
+      }
+    },
+
+    "share-export-btn": {
+      "type": "export-card",
+      "border": "border-vis",
+      "border-radius": 8,
+      "padding": "14px 10px",
+      "text-align": "center",
+      "cursor": "pointer",
+      "states": {
+        "default": { "border-color": "border-vis" },
+        "hover":   { "border-color": "accent" },
+        "primary": { "border-color": "accent", "background": "accent-sub" }
+      },
+      "children": {
+        "icon":  { "size": "icon-lg", "margin-bottom": 6 },
+        "label": { "font": "Syne Mono", "size": 10, "color": "text-sec", "primary-color": "accent-br" }
+      }
+    },
+
+    "share-access-section": {
+      "type": "section",
+      "background": "surface",
+      "border": "border",
+      "border-radius": 10,
+      "padding": "14px 16px",
+      "children": {
+        "label": { "type": "mono-label", "text": "ACCESS", "margin-bottom": 12 },
+        "access-row": {
+          "layout": "row space-between align-center",
+          "children": {
+            "access-label": { "font": "Syne", "size": 14, "color": "text-sec", "text": "Anyone with the link" },
+            "toggle": {
+              "type": "toggle",
+              "width": 36,
+              "height": 20,
+              "state": "on",
+              "background-on": "accent",
+              "background-off": "border-vis",
+              "thumb-size": 14
+            }
+          }
+        }
+      }
+    },
+
+    "share-success": {
+      "id": "share-success",
+      "type": "inline-status",
+      "background": "rgba(74,158,92,0.12)",
+      "border": "success",
+      "border-radius": 8,
+      "padding": "12px 14px",
+      "font": "Syne Mono",
+      "size": 11,
+      "color": "success",
+      "initial": "hidden",
+      "show-after": "exportSkill() called",
+      "animation": "GSAP fromTo autoAlpha+y:8→0, 0.22s power2.out",
+      "icon": "icon-check",
+      "format": "SKILL AVAILABLE · ghost.app/s/{skill-id}"
+    },
+
+    "btn-back": {
+      "type": "button",
+      "variant": "ghost",
+      "label": "← BACK TO SKILL",
+      "align-self": "flex-start",
+      "on-click": "goTo('share','detail',-1)"
+    }
+  },
+
+  "behavior": {
+    "copy-link": "navigator.clipboard.writeText(link); btn feedback 2s",
+    "export-skill": "show share-success; log type; future: write file via IPC",
+    "toggle-access": "toggle on/off state"
+  },
+
+  "navigation": {
+    "back": "detail",
+    "forward": []
+  }
+}
