@@ -1,130 +1,230 @@
-import Anthropic from '@anthropic-ai/sdk';
-import { WorkflowAnalysis, UserAnswer, SkillOutput } from './types';
+import Anthropic from "@anthropic-ai/sdk";
+import { WorkflowAnalysis, UserAnswer, SkillOutput } from "./types";
 
 const client = new Anthropic();
 
-const SYSTEM_PROMPT = `You are an AI Skill generator for Claude Code. You receive a workflow analysis and the user's answers to clarifying questions. Your job is to produce a .md skill file that Claude Code can load and execute.
+const SYSTEM_PROMPT = `You are an AI Skill generator for Claude Code. You receive a workflow analysis (from screenshots of a user performing a task) and the user's answers to clarifying questions. Your job is to produce an executable .md skill file that Claude Code can load and replay using computer-use MCP tools.
 
-The output .md file must have this format:
-# <skill-name>
+## Critical: The skill must be EXECUTABLE, not just descriptive
 
-Brief description of what this skill does.
+The skill will be loaded by Claude Code and executed using one of these MCP servers:
+- **Windows-MCP** (on Windows): tools like click, type, scroll, screenshot, open app, powershell
+- **desktop-pilot-mcp** (on macOS): tools like pilot_click, pilot_type, pilot_screenshot, pilot_find, pilot_script
+- **computer-use-mcp** (cross-platform fallback): screenshot-based click/type
 
-\`\`\`yaml
-name: kebab-case-skill-name
-version: '1.0'
+Claude will read the skill and translate each step into MCP tool calls. The skill must give Claude enough context to:
+1. FIND the right element (visual description, not coordinates)
+2. EXECUTE the action
+3. VERIFY it worked (what should the screen look like after)
+4. RECOVER if something goes wrong (fallback strategy)
+
+## Skill .md format
+
+The output must be a complete .md file with this structure:
+
+\`\`\`
+# <Skill Name>
+
+> One-line description of what this skill does.
+
+## Prerequisites
+- List of apps that must be installed/open
+- List of conditions that must be true before starting
+- Any credentials or data the user needs to provide
+
+## Execution Instructions
+
+Execute this workflow step by step using the computer-use MCP tools available in this session.
+
+**Before starting:**
+1. Take a screenshot to see the current state of the screen.
+2. Verify prerequisites are met.
+3. If an app needs to be opened, open it first and wait for it to load.
+
+**For each step:**
+1. Read the step description and visual_hint to understand what to look for.
+2. Take a screenshot if you need to locate the element.
+3. Perform the action described.
+4. Take a screenshot and verify the expected result matches the verify field.
+5. If verification fails, try the fallback strategy before moving to the next step.
+6. Only proceed to the next step after verification passes.
+
+**If a step fails after fallback:** Stop execution, report which step failed, include the screenshot, and ask the user how to proceed.
+
+## Workflow
+
+\\\`\\\`\\\`yaml
+name: kebab-case-name
+version: "1.0"
 description: |
-  Clear description of what this skill does.
-context:
-  apps:
-    - App Name
-  preconditions:
-    - Condition that must be true before starting
-steps:
-  - id: 1
-    action: verb
-    target: what to act on
-    description: human-readable explanation
+  Multi-line description of the full workflow.
+
 inputs:
   - name: input_name
-    type: string|date|number|file
+    type: string | number | date | file
     required: true
-    description: what this input is
+    description: What this input is and where to use it
+
+steps:
+  - id: 1
+    action: open_app | click | type | key | select | navigate | scroll | wait | verify
+    target: "semantic description of what to interact with"
+    description: "Human-readable explanation of this step's purpose"
+    visual_hint: "How to visually identify the target element on screen (color, position, icon, text label)"
+    verify: "What the screen should look like after this action succeeds"
+    fallback: "What to try if the primary action fails"
+
+  - id: 2
+    action: type
+    target: "input field"
+    text: "{{input_name}}"
+    description: "Fill in the field with the user-provided value"
+    visual_hint: "Text input with placeholder '...', below the label '...'"
+    verify: "The typed text is visible in the field"
+    fallback: "Click on the field first to ensure focus, then type"
+
 outputs:
   - name: output_name
-    type: string|file|spreadsheet
-    description: what this output is
+    type: string | file | screenshot
+    description: What this workflow produces
+\\\`\\\`\\\`
+
+## Troubleshooting
+
+- Common issue 1 and how to resolve it
+- Common issue 2 and how to resolve it
 \`\`\`
 
-Rules:
-- Use semantic action verbs: navigate, click, select, type, open, export, import, wait_for
-- Extract variable data into inputs (dates, names, IDs that change each run)
-- Keep steps atomic and executable
-- skill_name must be kebab-case
-- Return ONLY valid JSON with this exact schema (no markdown wrapping, just the JSON):
-{
-  "skill_name": "kebab-case-name",
-  "skill_filename": "kebab-case-name.md",
-  "skill_content": "full .md content as a string",
-  "claude_code_instructions": [
-    "Save the .md file to ~/.claude/skills/<skill-name>.md",
-    "Invoke the skill in any Claude Code session with: /<skill-name>",
-    "Claude Code will load and execute the skill step by step"
-  ]
-}`;
+## Rules for generating skills
 
-function buildUserMessage(analysis: WorkflowAnalysis, answers: UserAnswer[]): string {
-  return `Workflow Analysis:
+1. **visual_hint is mandatory for every step** — Claude needs to find elements by appearance, not coordinates. Describe color, position relative to other elements, text label, icon shape.
+2. **verify is mandatory for every step** — Claude must confirm each action worked before proceeding. Describe what changes on screen.
+3. **fallback is mandatory for every step** — Always provide an alternative approach (keyboard shortcut, different path, retry strategy).
+4. **Use {{input_name}} for variable data** — Dates, names, IDs, URLs that change between runs must be declared as inputs and referenced with double curly braces.
+5. **Steps must be atomic** — One action per step. "Open Chrome and navigate to URL" must be two steps.
+6. **action verbs must be from this list:** open_app, click, double_click, right_click, type, key, select, navigate, scroll, wait, verify, drag
+7. **Include a verify-only step at the end** — A final step that takes a screenshot and confirms the entire workflow completed successfully.
+8. **Troubleshooting section** — Include 2-4 common issues based on the workflow type (e.g., "app not responding", "element not found", "dialog blocking the view").
+9. **skill_name must be kebab-case**, max 40 characters, descriptive.
+10. **The Execution Instructions section is critical** — It tells Claude HOW to run the skill. Do not omit or simplify it.
+
+Return ONLY valid JSON matching the SkillOutput schema. No markdown wrapping, no explanation, just the JSON object.`;
+
+const SKILL_OUTPUT_SCHEMA: Anthropic.Tool = {
+  name: "submit_skill",
+  description: "Submit the generated skill file for Claude Code",
+  input_schema: {
+    type: "object" as const,
+    properties: {
+      skill_name: {
+        type: "string",
+        description:
+          'Kebab-case skill name, max 40 chars (e.g. "exportar-reporte-mensual")',
+      },
+      skill_filename: {
+        type: "string",
+        description:
+          'Filename with .md extension (e.g. "exportar-reporte-mensual.md")',
+      },
+      skill_content: {
+        type: "string",
+        description:
+          "Complete .md file content: title, description, prerequisites, execution instructions, YAML workflow block, and troubleshooting section",
+      },
+      claude_code_instructions: {
+        type: "array",
+        items: { type: "string" },
+        description: "Steps to install and use the skill in Claude Code",
+      },
+    },
+    required: [
+      "skill_name",
+      "skill_filename",
+      "skill_content",
+      "claude_code_instructions",
+    ],
+  },
+};
+
+function buildUserMessage(
+  analysis: WorkflowAnalysis,
+  answers: UserAnswer[],
+): string {
+  return `## Workflow Analysis (from screen recording)
+
 ${JSON.stringify(analysis, null, 2)}
 
-User's answers to clarifying questions:
+## User's Answers to Clarifying Questions
+
 ${JSON.stringify(answers, null, 2)}
 
-Generate the .md skill file for Claude Code and return the JSON output.`;
-}
+Generate the executable .md skill file for Claude Code. Remember:
+- Every step needs visual_hint, verify, and fallback
+- Variable data must be extracted as inputs with {{name}} syntax
+- The skill must be executable by Claude using computer-use MCP tools
+- Include the full Execution Instructions section
+- Include a Troubleshooting section
 
-function parseSkillOutput(text: string): SkillOutput | null {
-  try {
-    const parsed = JSON.parse(text);
-    if (parsed && typeof parsed.skill_content === 'string') {
-      return parsed as SkillOutput;
-    }
-    return null;
-  } catch {
-    return null;
-  }
+Call the submit_skill tool with the complete skill.`;
 }
 
 export async function generateSkill(
   analysis: WorkflowAnalysis,
-  answers: UserAnswer[]
+  answers: UserAnswer[],
 ): Promise<SkillOutput> {
-  console.log('[parrot:agent2] sending analysis + answers');
+  console.log("[parrot:agent2] sending analysis + answers");
 
   const userMessage = buildUserMessage(analysis, answers);
 
-  const firstResponse = await client.messages.create({
-    model: 'claude-opus-4-6',
-    max_tokens: 4096,
+  const response = await client.messages.create({
+    model: "claude-opus-4-6",
+    max_tokens: 8192,
     system: SYSTEM_PROMPT,
-    messages: [
-      { role: 'user', content: userMessage }
-    ]
+    tools: [SKILL_OUTPUT_SCHEMA],
+    tool_choice: { type: "tool" as const, name: "submit_skill" },
+    messages: [{ role: "user", content: userMessage }],
   });
 
-  const firstText = firstResponse.content
-    .filter((block) => block.type === 'text')
-    .map((block) => (block as { type: 'text'; text: string }).text)
-    .join('');
+  // With tool_choice forced, the response will always contain a tool_use block
+  const toolBlock = response.content.find(
+    (block): block is Anthropic.ToolUseBlock => block.type === "tool_use",
+  );
 
-  const firstResult = parseSkillOutput(firstText);
-  if (firstResult) {
-    console.log(`[parrot:agent2] received skill: ${firstResult.skill_name}`);
-    return firstResult;
+  if (!toolBlock) {
+    throw new Error(
+      "[parrot:agent2] No tool_use block in response — unexpected",
+    );
   }
 
-  // Retry once
-  const retryResponse = await client.messages.create({
-    model: 'claude-opus-4-6',
-    max_tokens: 4096,
-    system: SYSTEM_PROMPT,
-    messages: [
-      { role: 'user', content: userMessage },
-      { role: 'assistant', content: firstText },
-      { role: 'user', content: 'Your previous response was not valid JSON matching the schema. Return ONLY the JSON object, nothing else.' }
-    ]
-  });
+  const input = toolBlock.input as {
+    skill_name: string;
+    skill_filename: string;
+    skill_content: string;
+    claude_code_instructions: string[];
+  };
 
-  const retryText = retryResponse.content
-    .filter((block) => block.type === 'text')
-    .map((block) => (block as { type: 'text'; text: string }).text)
-    .join('');
-
-  const retryResult = parseSkillOutput(retryText);
-  if (retryResult) {
-    console.log(`[parrot:agent2] received skill: ${retryResult.skill_name}`);
-    return retryResult;
+  // Validate the essential fields
+  if (!input.skill_content || input.skill_content.length < 100) {
+    throw new Error("[parrot:agent2] skill_content is empty or too short");
   }
 
-  throw new Error('[parrot:agent2] Failed to generate valid skill output after retry');
+  if (!input.skill_name || !input.skill_filename) {
+    throw new Error("[parrot:agent2] skill_name or skill_filename missing");
+  }
+
+  const result: SkillOutput = {
+    skill_name: input.skill_name,
+    skill_filename: input.skill_filename,
+    skill_content: input.skill_content,
+    claude_code_instructions: input.claude_code_instructions || [
+      `Save to ~/.claude/commands/${input.skill_filename}`,
+      `Run with: /${input.skill_name}`,
+      "Claude Code will execute the skill step by step using available MCP tools",
+    ],
+  };
+
+  console.log(
+    `[parrot:agent2] generated skill: ${result.skill_name} (${result.skill_content.length} chars)`,
+  );
+  return result;
 }
