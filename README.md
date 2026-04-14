@@ -1,7 +1,6 @@
-<![CDATA[<div align="center">
+<div align="center">
 
-<!-- Logo placeholder — replace with actual logo -->
-<img src="assets/logo.png" alt="Parrot Logo" width="120" height="120" />
+<img src="assets/logo.png" alt="Parrot Logo" width="120" />
 
 # PARROT
 
@@ -22,9 +21,9 @@
 
 Parrot bridges the gap between **human expertise** and **AI execution**.
 
-You record your screen while doing any repetitive workflow. Parrot's AI pipeline — powered by Claude — watches what you did, understands it semantically, and packages it into a `.md` skill file that Claude Code (and soon Claude Desktop) can execute on demand.
+You record your screen while doing any repetitive workflow. Parrot's AI pipeline — powered by Claude — watches what you did, understands it semantically, and packages it into a skill file that Claude Code can execute on demand.
 
-No code. No documentation. No engineering team in the middle.
+**No code. No documentation. No engineering team in the middle.**
 
 ---
 
@@ -32,9 +31,9 @@ No code. No documentation. No engineering team in the middle.
 
 ```mermaid
 flowchart LR
-    A([🎬 Record]) --> B([🧠 AI Analyzes])
-    B --> C([📦 Skill Generated])
-    C --> D([⚡ Claude Executes])
+    A(["🎬  Record"]) --> B(["🧠  AI Analyzes"])
+    B --> C(["📦  Skill Generated"])
+    C --> D(["⚡  Claude Executes"])
 
     style A fill:#1f2335,stroke:#8b5cf6,color:#f1f5f9
     style B fill:#1f2335,stroke:#8b5cf6,color:#f1f5f9
@@ -42,17 +41,17 @@ flowchart LR
     style D fill:#1f2335,stroke:#22c55e,color:#f1f5f9
 ```
 
-### Step 1 — Record
-Open Parrot, press record, and just work. In any app — Chrome, Excel, your internal tools. Parrot captures your screen at 2-second intervals in the background. A floating overlay keeps you in control without interrupting your flow.
+**Step 1 — Record**
+Open Parrot, press record, and just work. In any app — Chrome, Excel, your internal tools. A floating overlay stays visible so you keep control without switching windows. Parrot captures your screen at 2-second intervals automatically.
 
-### Step 2 — AI Analyzes (Agent 1)
-When you stop, Parrot sends the captured frames to Claude's vision model. Claude identifies the semantic meaning of each action — not "clicked at x,y" but "opened the export menu" — and extracts the workflow steps, variable inputs, and decision points. Then it asks you up to 3 clarifying questions to resolve ambiguity.
+**Step 2 — AI Analyzes (Agent 1)**
+When you stop, Parrot sends the captured frames to Claude's vision model. Claude identifies the semantic meaning of each action — not "clicked at x,y" but "opened the export menu" — extracts the steps, variables, and decision points, then asks up to 3 clarifying questions.
 
-### Step 3 — Skill Generated (Agent 2)
-A second Claude agent takes the analysis + your answers and generates a structured `.md` skill file: a portable, readable document describing exactly how to execute the workflow. One click installs it directly to `~/.claude/skills/`.
+**Step 3 — Skill Generated (Agent 2)**
+A second Claude agent takes the analysis and your answers and generates a structured `SKILL.md` file: a portable, executable document Claude Code can load and run. One click installs it to `~/.claude/skills/`.
 
-### Step 4 — Claude Executes
-From any Claude Code session, type `/<skill-name>` and Claude runs the workflow — with full context of your steps, your variables, and your edge cases.
+**Step 4 — Claude Executes**
+From any Claude Code session, type `/<skill-name>` and Claude runs your workflow — with full context of every step, variable, and edge case.
 
 ---
 
@@ -60,30 +59,26 @@ From any Claude Code session, type `/<skill-name>` and Claude runs the workflow 
 
 ```mermaid
 sequenceDiagram
-    participant U as User
+    actor U as User
     participant P as Parrot App
-    participant A1 as Agent 1<br/>Workflow Analyzer
-    participant A2 as Agent 2<br/>Skill Generator
+    participant A1 as Agent 1 — Analyzer
+    participant A2 as Agent 2 — Generator
     participant CC as Claude Code
 
     U->>P: Press Record
-    P-->>U: Overlay appears (always-on-top)
-    U->>U: Works in any app
-    P->>P: Captures frame every 2s
-
+    P-->>U: Floating overlay appears
+    note over U,P: User works in any app — Parrot captures every 2s
     U->>P: Press Stop & Analyze
-    P->>A1: Send frames (max 15, sampled)<br/>+ recording duration
-    A1-->>P: WorkflowAnalysis JSON<br/>(steps, inputs, 3 questions)
-    P-->>U: Show analysis + questions
-
-    U->>P: Answer questions (optional)<br/>+ additional context
-    P->>A2: WorkflowAnalysis + answers
-    A2-->>P: skill_name + .md content
+    P->>A1: Frames + recording duration
+    A1-->>P: Workflow analysis + 3 questions
+    P-->>U: Show analysis + question form
+    U->>P: Answer questions + add context
+    P->>A2: Analysis + user answers
+    A2-->>P: SKILL.md content
     P-->>U: Show skill + install button
-
-    U->>P: Click "Install Automatically"
-    P->>CC: Write to ~/.claude/skills/<skill>.md
-    CC-->>U: /skill-name ready to use
+    U->>P: Install Automatically
+    P->>CC: Write to ~/.claude/skills/
+    CC-->>U: /skill-name ready
 ```
 
 ---
@@ -92,27 +87,26 @@ sequenceDiagram
 
 ```mermaid
 graph TB
-    subgraph Renderer["🖥️ Renderer Process (Browser)"]
+    subgraph Renderer["🖥️ Renderer Process"]
         UI[index.html]
         R[renderer.ts]
         OVL[overlay.html]
     end
 
-    subgraph Main["⚙️ Main Process (Node.js)"]
+    subgraph Main["⚙️ Main Process"]
         M[main.ts]
         A1[agent1-analyzer.ts]
         A2[agent2-generator.ts]
-        T[types.ts]
     end
 
-    subgraph IPC["🔌 IPC Bridge (preload.ts)"]
-        PRE[parrotAPI]
-        OPRE[overlayAPI]
+    subgraph Bridge["🔌 IPC Bridge"]
+        PRE[preload.ts]
+        OPRE[overlay-preload.ts]
     end
 
-    subgraph External["☁️ External"]
-        CLAUDE[Claude API<br/>claude-opus-4-6]
-        FS[~/.claude/skills/]
+    subgraph Cloud["☁️ External"]
+        CLAUDE["Claude API\nclaude-opus-4-6"]
+        FS["~/.claude/skills/"]
     end
 
     UI --> R
@@ -122,60 +116,80 @@ graph TB
     OPRE <-->|ipcRenderer| M
     M --> A1
     M --> A2
-    A1 & A2 --> T
-    A1 & A2 <--> CLAUDE
+    A1 -->|vision| CLAUDE
+    A2 -->|text| CLAUDE
     M --> FS
 
     style Renderer fill:#111318,stroke:#8b5cf6,color:#f1f5f9
     style Main fill:#111318,stroke:#7aa2f7,color:#f1f5f9
-    style IPC fill:#111318,stroke:#e0af68,color:#f1f5f9
-    style External fill:#111318,stroke:#22c55e,color:#f1f5f9
+    style Bridge fill:#111318,stroke:#e0af68,color:#f1f5f9
+    style Cloud fill:#111318,stroke:#22c55e,color:#f1f5f9
+```
+
+---
+
+## App Screens
+
+```mermaid
+stateDiagram-v2
+    [*] --> Home
+    Home --> Recording : Start Recording
+    Recording --> Analyzing : Stop and Analyze
+    Recording --> Home : Cancel
+    Analyzing --> AnalysisResult : Agent 1 success
+    Analyzing --> Error : API failure
+    AnalysisResult --> Generating : Generate Skill
+    Generating --> SkillResult : Agent 2 success
+    Generating --> Error : API failure
+    SkillResult --> Home : New Recording
+    Error --> Home : Back to Home
 ```
 
 ---
 
 ## Skill File Format
 
-The output is a `.md` file native to Claude Code's skill system:
+Parrot generates a `SKILL.md` file — Claude Code's native skill format. Here is what a generated skill looks like:
 
-```markdown
-# export-monthly-report
-
-Exports the monthly sales report from the dashboard and imports it into the template spreadsheet.
-
-```yaml
-name: export-monthly-report
-version: '1.0'
-description: |
-  Navigates to the reports section, applies the current month filter,
-  exports to CSV, and imports the data into the Google Sheets template.
-context:
-  apps:
-    - Chrome
-    - Google Sheets
-  preconditions:
-    - Logged into the sales dashboard
-steps:
-  - id: 1
-    action: navigate
-    target: dashboard > reports > monthly
-    description: Go to the monthly reports section
-  - id: 2
-    action: select
-    target: period filter
-    value: "{{current_month}}"
-  - id: 3
-    action: click
-    target: Export CSV button
-    wait_for: download complete
-inputs:
-  - name: current_month
-    type: date_month
-    required: true
-outputs:
-  - name: report_file
-    type: spreadsheet
 ```
+---
+name: export-monthly-report
+description: "Exports the monthly sales report and loads it into the template. Use when preparing the Friday report."
+disable-model-invocation: true
+allowed-tools: mcp__windows-mcp__screenshot mcp__windows-mcp__click mcp__windows-mcp__type
+---
+
+## Setup automatico
+
+Sistema operativo: !`uname -s`
+Windows-MCP disponible: !`uvx windows-mcp --version 2>/dev/null || echo "no instalado"`
+
+## Objetivo
+
+Navigate to the dashboard reports section, apply the current month filter,
+export to CSV, and import the data into the Google Sheets template.
+
+## Pasos
+
+### 1. Open Dashboard
+Navigate to the sales dashboard. Verify the main dashboard is visible.
+
+### 2. Go to Reports
+Click the "Reports" section in the sidebar. Use mcp__windows-mcp__snapshot to confirm navigation.
+
+### 3. Apply monthly filter
+Select the current month in the period filter. Value: {{current_month}}.
+
+### 4. Export CSV
+Click "Export CSV" and wait for the download to complete.
+
+## Parametros
+
+- current_month: string — month to export (e.g. "April 2026")
+
+## Resultado esperado
+
+CSV file downloaded, imported into the Google Sheets template.
 ```
 
 ---
@@ -185,44 +199,23 @@ outputs:
 ```
 parrot/
 ├── src/
-│   ├── main.ts                    # Electron main process + IPC handlers
-│   ├── preload.ts                 # Main window context bridge
-│   ├── overlay-preload.ts         # Overlay window context bridge
+│   ├── main.ts                 # Electron main process + all IPC handlers
+│   ├── preload.ts              # Main window context bridge (parrotAPI)
+│   ├── overlay-preload.ts      # Overlay window context bridge (overlayAPI)
 │   ├── ai/
-│   │   ├── types.ts               # Shared TypeScript interfaces
-│   │   ├── agent1-analyzer.ts     # Workflow analysis agent (vision)
-│   │   └── agent2-generator.ts    # Skill generation agent (text)
+│   │   ├── types.ts            # Shared TypeScript interfaces
+│   │   ├── agent1-analyzer.ts  # Workflow analysis — Claude vision
+│   │   └── agent2-generator.ts # Skill generation — Claude text
 │   └── renderer/
-│       ├── index.html             # Main app UI (6 screens)
-│       ├── overlay.html           # Floating recording indicator
-│       └── renderer.ts            # UI logic + state management
+│       ├── index.html          # Main app UI — 6 screens
+│       ├── overlay.html        # Floating recording indicator
+│       └── renderer.ts         # UI logic and session state
 ├── specs/
-│   └── features/                  # Spec-driven feature docs
+│   └── features/               # Spec-driven feature documentation
 ├── parrot_vault/
-│   └── ideas/                     # Vision & decision docs
-├── .env.example                   # Environment variable template
+│   └── ideas/                  # Vision and architecture docs
+├── .env.example
 └── package.json
-```
-
----
-
-## Screens
-
-```mermaid
-stateDiagram-v2
-    [*] --> Home
-    Home --> Recording : Press "Start Recording"
-    Recording --> Analyzing : Press "Stop & Analyze"\n(main window or overlay)
-    Recording --> Home : Cancel
-    Analyzing --> AnalysisResult : Agent 1 returns analysis
-    Analyzing --> Error : API failure
-    AnalysisResult --> Generating : Press "Generate Skill"
-    Generating --> SkillResult : Agent 2 returns skill
-    Generating --> Error : API failure
-    SkillResult --> Home : "New Recording"
-    Error --> Analyzing : Retry (Agent 1)
-    Error --> Generating : Retry (Agent 2)
-    Error --> Home : Back to Home
 ```
 
 ---
@@ -238,8 +231,8 @@ stateDiagram-v2
 ### Install
 
 ```bash
-git clone https://github.com/your-org/parrot.git
-cd parrot
+git clone https://github.com/agustingonzalez2211-creator/Parrot.git
+cd Parrot
 pnpm install
 ```
 
@@ -247,7 +240,12 @@ pnpm install
 
 ```bash
 cp .env.example .env
-# Edit .env and add your ANTHROPIC_API_KEY
+```
+
+Open `.env` and set your key:
+
+```
+ANTHROPIC_API_KEY=sk-ant-...
 ```
 
 ### Run
@@ -262,7 +260,7 @@ pnpm start
 
 | Variable | Required | Description |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | ✅ | Your Anthropic API key — get it at [console.anthropic.com](https://console.anthropic.com) |
+| `ANTHROPIC_API_KEY` | ✅ Yes | Anthropic API key — [get one here](https://console.anthropic.com/settings/keys) |
 
 ---
 
@@ -272,11 +270,10 @@ pnpm start
 |---|---|
 | Desktop runtime | Electron 36 |
 | Language | TypeScript 5 |
-| AI models | claude-opus-4-6 (vision + text) |
+| AI model | claude-opus-4-6 |
 | AI SDK | @anthropic-ai/sdk |
 | Renderer bundler | esbuild |
 | Package manager | pnpm |
-| Fonts | JetBrains Mono, Rajdhani |
 
 ---
 
@@ -285,18 +282,18 @@ pnpm start
 ```mermaid
 timeline
     title Parrot Roadmap
-    Today : Claude Code integration
-          : Slash command execution
-          : Auto-install to ~/.claude/skills/
-    Next 90 days : Claude Desktop integration
-                 : No CLI required
-                 : Non-technical user ready
-    6 months : Skill marketplace
-             : Share & discover skills
-             : Version control for workflows
-    12 months : Skill chaining
-              : Enterprise audit trail
-              : Multi-modal capture (screen + voice)
+    Today         : Claude Code integration
+                  : Slash command execution
+                  : Auto-install to ~/.claude/skills/
+    Next 90 days  : Claude Desktop integration
+                  : No CLI required
+                  : Available to all non-technical users
+    6 months      : Skill marketplace
+                  : Share and discover skills
+                  : Version control for workflows
+    12 months     : Skill chaining
+                  : Enterprise audit trail
+                  : Voice + screen capture
 ```
 
 ---
@@ -306,7 +303,7 @@ timeline
 1. Fork the repo
 2. Create a feature branch: `git checkout -b feature/your-feature`
 3. Follow the spec-first workflow in `specs/features/`
-4. Submit a PR
+4. Open a pull request
 
 ---
 
@@ -323,4 +320,3 @@ MIT © 2026 Parrot
 *The missing link between human workflows and AI agents.*
 
 </div>
-]]>
