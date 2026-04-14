@@ -1,6 +1,5 @@
 import { app, BrowserWindow, ipcMain, desktopCapturer } from 'electron';
 import * as path from 'path';
-import * as fs from 'fs';
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -26,23 +25,15 @@ app.whenReady().then(() => {
   });
 });
 
+// En Mac la app no se cierra al cerrar todas las ventanas
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
 
-// IPC: guardar grabacion a disco
-ipcMain.handle('save-recording', async (_event, buffer: ArrayBuffer) => {
-  const recordingsDir = path.join(app.getPath('userData'), 'recordings');
-  fs.mkdirSync(recordingsDir, { recursive: true });
-  const filePath = path.join(recordingsDir, `recording-${Date.now()}.webm`);
-  fs.writeFileSync(filePath, Buffer.from(buffer));
-  return filePath;
-});
-
-// IPC: obtener fuentes de pantalla para grabacion
+// IPC: obtener fuentes de pantalla — funciona en Mac, Windows y Linux (X11)
 ipcMain.handle('get-sources', async () => {
   const sources = await desktopCapturer.getSources({
-    types: ['screen', 'window'],
+    types: ['screen'],
     thumbnailSize: { width: 320, height: 180 },
   });
   return sources.map((s) => ({

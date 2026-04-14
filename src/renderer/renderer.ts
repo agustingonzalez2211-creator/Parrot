@@ -4,72 +4,117 @@ declare global {
   interface Window {
     parrotAPI: {
       getSources: () => Promise<{ id: string; name: string; thumbnail: string }[]>;
-      saveRecording: (buffer: ArrayBuffer) => Promise<string>;
     };
   }
 }
 
-const btnRecord = document.getElementById('btn-record') as HTMLButtonElement;
-const btnStop = document.getElementById('btn-stop') as HTMLButtonElement;
-const btnAnalyze = document.getElementById('btn-analyze') as HTMLButtonElement;
-const statusEl = document.getElementById('status') as HTMLParagraphElement;
+const screenHome      = document.getElementById('screen-home')!;
+const screenRecording = document.getElementById('screen-recording')!;
+const btnRecord       = document.getElementById('btn-record')       as HTMLButtonElement;
+const btnCancel       = document.getElementById('btn-cancel')       as HTMLButtonElement;
+const preview         = document.getElementById('preview')          as HTMLVideoElement;
+const recTimer        = document.getElementById('rec-timer')!;
+const vfSource        = document.getElementById('vf-source')!;
+const sbSize          = document.getElementById('sb-size')!;
 
 let mediaRecorder: MediaRecorder | null = null;
 let recordedChunks: Blob[] = [];
+let activeStream: MediaStream | null = null;
+let timerInterval: ReturnType<typeof setInterval> | null = null;
+let seconds = 0;
+let frameCount = 0;
+
+function formatTime(s: number): string {
+  const m = Math.floor(s / 60).toString().padStart(2, '0');
+  const sec = (s % 60).toString().padStart(2, '0');
+  return `${m}<span>:</span>${sec}`;
+}
+
+function startTimer() {
+  seconds = 0;
+  recTimer.innerHTML = formatTime(0);
+  timerInterval = setInterval(() => {
+    seconds++;
+    recTimer.innerHTML = formatTime(seconds);
+  }, 1000);
+}
+
+function stopTimer() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+}
+
+function showRecording() {
+  screenHome.style.display = 'none';
+  screenRecording.style.display = 'flex';
+}
+
+function showHome() {
+  screenHome.style.display = 'flex';
+  screenRecording.style.display = 'none';
+}
 
 btnRecord.addEventListener('click', async () => {
-  statusEl.textContent = 'Seleccionando pantalla...';
+  // Transicion inmediata — no esperamos a que capture
+  showRecording();
+  startTimer();
+  vfSource.textContent = 'Iniciando...';
 
-  const sources = await window.parrotAPI.getSources();
-  const screen = sources.find((s) => s.name === 'Entire Screen') || sources[0];
+  try {
+    const sources = await window.parrotAPI.getSources();
+    const screen = sources[0];
 
-  if (!screen) {
-    statusEl.textContent = 'No se encontro fuente de pantalla';
-    return;
-  }
+    if (!screen) {
+      vfSource.textContent = 'Sin fuente — verificá permisos';
+      return;
+    }
 
-  const stream = await navigator.mediaDevices.getUserMedia({
-    audio: false,
-    video: {
-      // @ts-ignore - electron specific constraint
-      mandatory: {
-        chromeMediaSource: 'desktop',
-        chromeMediaSourceId: screen.id,
+    vfSource.textContent = screen.name;
+
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: {
+        // @ts-ignore — Electron-specific constraint
+        mandatory: {
+          chromeMediaSource: 'desktop',
+          chromeMediaSourceId: screen.id,
+        },
       },
-    },
-  });
+    });
 
+    activeStream = stream;
+    preview.srcObject = stream;
+    preview.style.display = 'block';
+
+    recordedChunks = [];
+    frameCount = 0;
+
+    mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9' });
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) {
+        recordedChunks.push(e.data);
+        frameCount++;
+        const mb = (recordedChunks.reduce((a, b) => a + b.size, 0) / 1024 / 1024).toFixed(1);
+        sbSize.textContent = `${frameCount} chunks · ${mb} MB`;
+      }
+    };
+    mediaRecorder.start(1000);
+
+  } catch (err) {
+    console.error('Capture error:', err);
+    vfSource.textContent = 'Error al capturar pantalla';
+    sbSize.textContent = 'Verificá permisos de grabación';
+  }
+});
+
+btnCancel.addEventListener('click', () => {
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+  if (activeStream) {
+    activeStream.getTracks().forEach((t) => t.stop());
+    activeStream = null;
+  }
+  preview.srcObject = null;
+  preview.style.display = 'none';
   recordedChunks = [];
-  mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9' });
-
-  mediaRecorder.ondataavailable = (e) => {
-    if (e.data.size > 0) recordedChunks.push(e.data);
-  };
-
-  mediaRecorder.start();
-  statusEl.textContent = 'Grabando... realizá tu flujo de trabajo';
-  btnRecord.disabled = true;
-  btnStop.disabled = false;
-  btnAnalyze.disabled = true;
-});
-
-btnStop.addEventListener('click', () => {
-  if (!mediaRecorder) return;
-
-  mediaRecorder.onstop = async () => {
-    const blob = new Blob(recordedChunks, { type: 'video/webm' });
-    const arrayBuffer = await blob.arrayBuffer();
-    const filePath = await window.parrotAPI.saveRecording(arrayBuffer);
-    statusEl.textContent = `Grabacion guardada. Listo para analizar.`;
-    console.log('Recording saved to:', filePath);
-    btnAnalyze.disabled = false;
-  };
-
-  mediaRecorder.stop();
-  btnRecord.disabled = false;
-  btnStop.disabled = true;
-});
-
-btnAnalyze.addEventListener('click', () => {
-  statusEl.textContent = 'Analizando con IA... (proximamente)';
+  stopTimer();
+  showHome();
 });

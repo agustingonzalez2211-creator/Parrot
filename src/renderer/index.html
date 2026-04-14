@@ -7,23 +7,24 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+
   <style>
     :root {
       --bg-0: #0c0d10;
       --bg-1: #111318;
       --bg-2: #181b22;
-      --bg-3: #1e2230;
-      --border: rgba(139, 92, 246, 0.15);
-      --border-bright: rgba(139, 92, 246, 0.45);
+      --border: rgba(139, 92, 246, 0.12);
+      --border-bright: rgba(139, 92, 246, 0.4);
       --violet: #8b5cf6;
-      --violet-dim: #6d28d9;
+      --violet-dim: rgba(139, 92, 246, 0.15);
       --violet-glow: rgba(139, 92, 246, 0.25);
-      --violet-faint: rgba(139, 92, 246, 0.07);
-      --gray-text: #9ca3af;
-      --gray-dim: #4b5563;
-      --white: #f1f5f9;
       --red: #ef4444;
+      --red-dim: rgba(239, 68, 68, 0.12);
       --red-glow: rgba(239, 68, 68, 0.3);
+      --green: #22c55e;
+      --text: #f1f5f9;
+      --text-mid: #94a3b8;
+      --text-dim: #475569;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -31,525 +32,486 @@
     body {
       font-family: 'JetBrains Mono', monospace;
       background: var(--bg-0);
-      color: var(--white);
+      color: var(--text);
       height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── TITLEBAR ─────────────────────────────── */
+    .titlebar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 24px;
+      border-bottom: 1px solid var(--border);
+      -webkit-app-region: drag;
+      flex-shrink: 0;
+    }
+
+    .titlebar-brand {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text);
+      -webkit-app-region: no-drag;
+    }
+
+    .titlebar-brand span { color: var(--violet); }
+
+    .titlebar-tag {
+      font-size: 0.58rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    /* ── SCREENS ──────────────────────────────── */
+    #screen-home,
+    #screen-recording {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    #screen-recording { display: none; }
+
+    /* ── HOME SCREEN ──────────────────────────── */
+    .home-content {
+      flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      overflow: hidden;
+      gap: 0;
+      padding: 48px;
       position: relative;
     }
 
     /* Grid background */
-    body::before {
+    .home-content::before {
       content: '';
-      position: fixed;
+      position: absolute;
       inset: 0;
       background-image:
         linear-gradient(var(--border) 1px, transparent 1px),
         linear-gradient(90deg, var(--border) 1px, transparent 1px);
       background-size: 48px 48px;
-      mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, black 40%, transparent 100%);
+      mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, black 30%, transparent 100%);
       pointer-events: none;
-      z-index: 0;
     }
 
     /* Violet ambient glow */
-    body::after {
+    .home-content::after {
       content: '';
-      position: fixed;
-      width: 600px;
-      height: 600px;
-      background: radial-gradient(ellipse, rgba(109, 40, 217, 0.12) 0%, transparent 70%);
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(ellipse, rgba(109, 40, 217, 0.1) 0%, transparent 70%);
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
       pointer-events: none;
-      z-index: 0;
     }
 
-    .container {
+    .home-hero {
       position: relative;
       z-index: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0;
-      width: 480px;
+      text-align: center;
+      margin-bottom: 44px;
     }
 
-    /* Top decorative bar */
-    .topbar {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 0 20px 0;
-      animation: fadeSlideDown 0.6s ease both;
-    }
-
-    .topbar-tag {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.65rem;
-      font-weight: 400;
-      color: var(--gray-dim);
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-    }
-
-    .topbar-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--violet);
-      box-shadow: 0 0 8px var(--violet);
-      animation: pulse-slow 3s ease-in-out infinite;
-    }
-
-    /* Main card */
-    .card {
-      width: 100%;
-      background: var(--bg-1);
-      border: 1px solid var(--border);
-      border-radius: 2px;
-      padding: 48px 44px 40px;
-      position: relative;
-      animation: fadeIn 0.7s ease both 0.1s;
-      box-shadow:
-        0 0 0 1px rgba(139, 92, 246, 0.05),
-        0 24px 60px rgba(0, 0, 0, 0.5),
-        inset 0 1px 0 rgba(255, 255, 255, 0.03);
-    }
-
-    /* Corner accents */
-    .card::before,
-    .card::after {
-      content: '';
-      position: absolute;
-      width: 12px;
-      height: 12px;
-      border-color: var(--violet);
-      border-style: solid;
-    }
-    .card::before {
-      top: -1px;
-      left: -1px;
-      border-width: 2px 0 0 2px;
-    }
-    .card::after {
-      bottom: -1px;
-      right: -1px;
-      border-width: 0 2px 2px 0;
-    }
-
-    /* Header */
-    .header {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      margin-bottom: 36px;
-    }
-
-    .brand {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .brand-name {
+    .home-title {
       font-family: 'Rajdhani', sans-serif;
-      font-size: 2.6rem;
+      font-size: 3.4rem;
       font-weight: 700;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.06em;
       line-height: 1;
-      color: var(--white);
       text-transform: uppercase;
+      margin-bottom: 6px;
     }
 
-    .brand-name span {
-      color: var(--violet);
-    }
+    .home-title span { color: var(--violet); }
 
-    .brand-sub {
-      font-size: 0.65rem;
+    .home-version {
+      font-size: 0.58rem;
       letter-spacing: 0.2em;
       text-transform: uppercase;
-      color: var(--gray-dim);
-      font-weight: 400;
-    }
-
-    .version-badge {
-      font-size: 0.6rem;
-      letter-spacing: 0.1em;
       color: var(--violet);
       border: 1px solid var(--border-bright);
-      padding: 3px 8px;
+      display: inline-block;
+      padding: 3px 10px;
       border-radius: 2px;
-      background: var(--violet-faint);
-      text-transform: uppercase;
-      margin-top: 4px;
+      background: var(--violet-dim);
+      margin-bottom: 24px;
     }
 
-    /* Subtitle */
-    .subtitle {
+    .home-desc {
       font-size: 0.72rem;
-      color: var(--gray-text);
-      line-height: 1.7;
+      color: var(--text-mid);
+      line-height: 1.9;
       letter-spacing: 0.02em;
-      margin-bottom: 36px;
-      padding-bottom: 28px;
-      border-bottom: 1px solid var(--border);
       font-weight: 300;
     }
 
-    /* Recording indicator */
-    .rec-indicator {
+    /* Record button */
+    .btn-start {
+      position: relative;
+      z-index: 1;
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin-bottom: 28px;
-      opacity: 0;
-      transition: opacity 0.4s ease;
+      gap: 12px;
+      padding: 15px 36px;
+      background: transparent;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      border-radius: 2px;
+      color: var(--red);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s ease;
     }
 
-    .rec-indicator.active {
-      opacity: 1;
+    .btn-start:hover {
+      background: var(--red-dim);
+      border-color: rgba(239, 68, 68, 0.7);
+      box-shadow: 0 0 24px var(--red-glow);
     }
 
-    .rec-dot {
+    .btn-start-dot {
       width: 8px;
       height: 8px;
       background: var(--red);
       border-radius: 50%;
-      box-shadow: 0 0 10px var(--red-glow);
-      animation: rec-pulse 1.2s ease-in-out infinite;
+      box-shadow: 0 0 8px var(--red);
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+
+    /* Steps */
+    .steps {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      gap: 8px;
+      margin-top: 40px;
+    }
+
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      background: var(--bg-1);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      font-size: 0.6rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    .step-num {
+      font-size: 0.58rem;
+      color: var(--violet);
+    }
+
+    /* ── RECORDING SCREEN ─────────────────────── */
+    .recording-layout {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .rec-hud {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      background: var(--bg-1);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .rec-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--red-dim);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      border-radius: 2px;
+      padding: 5px 12px;
+    }
+
+    .rec-dot {
+      width: 7px;
+      height: 7px;
+      background: var(--red);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--red);
+      animation: blink 1.2s ease-in-out infinite;
     }
 
     .rec-label {
-      font-size: 0.6rem;
-      letter-spacing: 0.25em;
+      font-size: 0.58rem;
+      font-weight: 500;
+      letter-spacing: 0.22em;
       text-transform: uppercase;
       color: var(--red);
-      font-weight: 500;
     }
 
-    .rec-time {
-      margin-left: auto;
-      font-size: 0.65rem;
-      color: var(--gray-dim);
-      letter-spacing: 0.1em;
+    .rec-timer {
+      font-size: 1.5rem;
+      font-weight: 300;
+      letter-spacing: 0.08em;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
     }
 
-    /* Controls */
-    .controls {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 24px;
-    }
+    .rec-timer span { color: var(--text-dim); }
 
-    button {
-      position: relative;
-      padding: 14px 12px;
-      border: 1px solid transparent;
+    .btn-cancel {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 18px;
+      background: transparent;
+      border: 1px solid var(--border-bright);
       border-radius: 2px;
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 0.95rem;
-      font-weight: 600;
+      color: var(--text-mid);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
       letter-spacing: 0.12em;
       text-transform: uppercase;
       cursor: pointer;
       transition: all 0.2s ease;
+    }
+
+    .btn-cancel:hover {
+      border-color: rgba(239, 68, 68, 0.5);
+      color: var(--red);
+      background: var(--red-dim);
+    }
+
+    /* Viewfinder */
+    .viewfinder-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: #080910;
+      position: relative;
       overflow: hidden;
     }
 
-    button::before {
+    /* Scan lines */
+    .viewfinder-wrap::before {
       content: '';
       position: absolute;
-      inset: 0;
-      opacity: 0;
-      transition: opacity 0.2s ease;
-    }
-
-    button:hover:not(:disabled)::before { opacity: 1; }
-
-    button:disabled {
-      opacity: 0.3;
-      cursor: not-allowed;
-    }
-
-    /* Record button */
-    #btn-record {
-      background: transparent;
-      color: var(--red);
-      border-color: rgba(239, 68, 68, 0.35);
-    }
-    #btn-record::before {
-      background: rgba(239, 68, 68, 0.08);
-    }
-    #btn-record:hover:not(:disabled) {
-      border-color: rgba(239, 68, 68, 0.7);
-      box-shadow: 0 0 16px rgba(239, 68, 68, 0.2), inset 0 0 16px rgba(239, 68, 68, 0.05);
-    }
-
-    /* Stop button */
-    #btn-stop {
-      background: transparent;
-      color: var(--gray-text);
-      border-color: var(--gray-dim);
-    }
-    #btn-stop::before {
-      background: rgba(156, 163, 175, 0.06);
-    }
-    #btn-stop:hover:not(:disabled) {
-      color: var(--white);
-      border-color: var(--gray-text);
-    }
-
-    /* Analyze button */
-    #btn-analyze {
-      background: var(--violet-faint);
-      color: var(--violet);
-      border-color: var(--border-bright);
-    }
-    #btn-analyze::before {
-      background: rgba(139, 92, 246, 0.1);
-    }
-    #btn-analyze:hover:not(:disabled) {
-      border-color: var(--violet);
-      color: var(--white);
-      box-shadow: 0 0 20px var(--violet-glow), inset 0 0 20px rgba(139, 92, 246, 0.07);
-    }
-
-    /* Status */
-    .status-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 14px;
-      background: var(--bg-2);
-      border: 1px solid var(--border);
-      border-radius: 2px;
-    }
-
-    .status-icon {
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: var(--violet);
-      flex-shrink: 0;
-      box-shadow: 0 0 6px var(--violet);
-      transition: background 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .status-icon.recording {
-      background: var(--red);
-      box-shadow: 0 0 6px var(--red-glow);
-    }
-
-    #status {
-      font-size: 0.68rem;
-      color: var(--gray-text);
-      letter-spacing: 0.08em;
-      font-weight: 400;
-      flex: 1;
-      transition: color 0.3s ease;
-    }
-
-    /* Bottom bar */
-    .bottombar {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px 0 0 0;
-      animation: fadeSlideUp 0.6s ease both 0.3s;
-    }
-
-    .sys-info {
-      display: flex;
-      gap: 20px;
-    }
-
-    .sys-info-item {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .sys-info-label {
-      font-size: 0.55rem;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      color: var(--gray-dim);
-    }
-
-    .sys-info-value {
-      font-size: 0.65rem;
-      color: var(--gray-text);
-      letter-spacing: 0.05em;
-    }
-
-    .sys-status {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.6rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--gray-dim);
-    }
-
-    .sys-status-dot {
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: #22c55e;
-      box-shadow: 0 0 6px rgba(34, 197, 94, 0.5);
-    }
-
-    /* Animations */
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes fadeSlideDown {
-      from { opacity: 0; transform: translateY(-8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes fadeSlideUp {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes pulse-slow {
-      0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--violet); }
-      50% { opacity: 0.5; box-shadow: 0 0 3px var(--violet); }
-    }
-
-    @keyframes rec-pulse {
-      0%, 100% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.35); opacity: 0.6; }
-    }
-
-    /* Scanline overlay */
-    .scanlines {
-      position: fixed;
       inset: 0;
       background: repeating-linear-gradient(
         0deg,
         transparent,
         transparent 2px,
-        rgba(0, 0, 0, 0.03) 2px,
-        rgba(0, 0, 0, 0.03) 4px
+        rgba(0, 0, 0, 0.07) 2px,
+        rgba(0, 0, 0, 0.07) 4px
       );
       pointer-events: none;
-      z-index: 0;
+      z-index: 10;
     }
+
+    /* Moving scan line */
+    .viewfinder-wrap::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.5), transparent);
+      animation: scanline 4s linear infinite;
+      z-index: 11;
+      pointer-events: none;
+    }
+
+    .viewfinder {
+      position: relative;
+      width: 100%;
+      max-height: 100%;
+      aspect-ratio: 16/9;
+    }
+
+    #preview {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      border-radius: 2px;
+      background: var(--bg-2);
+    }
+
+    /* Corner brackets — violet */
+    .corner {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      border-color: var(--violet);
+      border-style: solid;
+      z-index: 12;
+    }
+
+    .corner-tl { top: -1px; left: -1px;   border-width: 2px 0 0 2px; }
+    .corner-tr { top: -1px; right: -1px;  border-width: 2px 2px 0 0; }
+    .corner-bl { bottom: -1px; left: -1px;  border-width: 0 0 2px 2px; }
+    .corner-br { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+    .vf-label-tl, .vf-label-tr,
+    .vf-label-bl, .vf-label-br {
+      position: absolute;
+      font-size: 0.52rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      z-index: 12;
+    }
+
+    .vf-label-tl { top: 8px; left: 8px; color: var(--violet); }
+    .vf-label-tr { top: 8px; right: 8px; color: var(--text-dim); text-align: right; }
+    .vf-label-bl { bottom: 8px; left: 8px; color: var(--text-dim); }
+    .vf-label-br { bottom: 8px; right: 8px; color: var(--green); text-align: right; }
+
+    /* Status bar */
+    .rec-statusbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 20px;
+      background: var(--bg-1);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .statusbar-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.58rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    .statusbar-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 5px var(--green);
+    }
+
+    /* ── ANIMATIONS ───────────────────────────── */
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.75); }
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.15; }
+    }
+
+    @keyframes scanline {
+      0% { top: -1px; }
+      100% { top: 100%; }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    #screen-home      { animation: fadeIn 0.35s ease both; }
+    #screen-recording { animation: fadeIn 0.25s ease both; }
   </style>
 </head>
 <body>
-  <div class="scanlines"></div>
 
-  <div class="container">
-    <div class="topbar">
-      <span class="topbar-tag">SYS // PARROT_AGENT_v1</span>
-      <div class="topbar-dot"></div>
-    </div>
+  <!-- TITLEBAR -->
+  <div class="titlebar">
+    <div class="titlebar-brand">P<span>A</span>RROT</div>
+    <div class="titlebar-tag">Screen → AI Skill · v0.1</div>
+  </div>
 
-    <div class="card">
-      <div class="header">
-        <div class="brand">
-          <div class="brand-name">PAR<span>R</span>OT</div>
-          <div class="brand-sub">Workflow capture system</div>
-        </div>
-        <div class="version-badge">v1.0.0</div>
+  <!-- HOME SCREEN -->
+  <div id="screen-home">
+    <div class="home-content">
+
+      <div class="home-hero">
+        <div class="home-version">Alpha · Hackathon Build</div>
+        <h1 class="home-title">Grabá.<br><span>Enseñá.</span><br>Automatizá.</h1>
       </div>
 
-      <p class="subtitle">
-        Grabá tu flujo de trabajo. La IA aprende cada paso.<br>
-        Cualquier agente puede reproducirlo.
+      <p class="home-desc" style="position:relative;z-index:1;text-align:center;margin-bottom:36px;">
+        Mostrá tu flujo de trabajo en pantalla.<br>
+        La IA lo convierte en un skill reutilizable.
       </p>
 
-      <div class="rec-indicator" id="rec-indicator">
-        <div class="rec-dot"></div>
-        <span class="rec-label">REC</span>
-        <span class="rec-time" id="rec-time">00:00</span>
+      <button class="btn-start" id="btn-record">
+        <div class="btn-start-dot"></div>
+        Iniciar grabación
+      </button>
+
+      <div class="steps">
+        <div class="step"><span class="step-num">01</span> Grabá</div>
+        <div class="step"><span class="step-num">02</span> IA analiza</div>
+        <div class="step"><span class="step-num">03</span> Skill listo</div>
       </div>
 
-      <div class="controls">
-        <button id="btn-record">&#9654; Grabar</button>
-        <button id="btn-stop" disabled>&#9632; Detener</button>
-        <button id="btn-analyze" disabled>&#9670; Analizar</button>
-      </div>
-
-      <div class="status-row">
-        <div class="status-icon" id="status-icon"></div>
-        <p id="status">Listo para grabar</p>
-      </div>
     </div>
+  </div>
 
-    <div class="bottombar">
-      <div class="sys-info">
-        <div class="sys-info-item">
-          <span class="sys-info-label">Codec</span>
-          <span class="sys-info-value">VP9 / WebM</span>
+  <!-- RECORDING SCREEN -->
+  <div id="screen-recording">
+    <div class="recording-layout">
+
+      <div class="rec-hud">
+        <div class="rec-badge">
+          <div class="rec-dot"></div>
+          <span class="rec-label">Grabando</span>
         </div>
-        <div class="sys-info-item">
-          <span class="sys-info-label">Fuente</span>
-          <span class="sys-info-value">Desktop</span>
+        <div class="rec-timer" id="rec-timer">00<span>:</span>00</div>
+        <button class="btn-cancel" id="btn-cancel">✕ &nbsp;Cancelar</button>
+      </div>
+
+      <div class="viewfinder-wrap">
+        <div class="viewfinder">
+          <video id="preview" muted autoplay></video>
+          <div class="corner corner-tl"></div>
+          <div class="corner corner-tr"></div>
+          <div class="corner corner-bl"></div>
+          <div class="corner corner-br"></div>
+          <div class="vf-label-tl">PARROT · REC</div>
+          <div class="vf-label-tr" id="vf-source">Iniciando...</div>
+          <div class="vf-label-bl">VP9 · WebM</div>
+          <div class="vf-label-br" id="vf-chunks">● LIVE</div>
         </div>
       </div>
-      <div class="sys-status">
-        <div class="sys-status-dot"></div>
-        Sistema operativo
+
+      <div class="rec-statusbar">
+        <div class="statusbar-item">
+          <div class="statusbar-dot"></div>
+          Stream activo
+        </div>
+        <div class="statusbar-item" id="sb-size">0 chunks · 0.0 MB</div>
+        <div class="statusbar-item">desktopCapturer</div>
       </div>
+
     </div>
   </div>
 
   <script src="renderer.js"></script>
-  <script>
-    // Recording timer
-    let timerInterval = null;
-    let seconds = 0;
-
-    function startTimer() {
-      seconds = 0;
-      timerInterval = setInterval(() => {
-        seconds++;
-        const m = String(Math.floor(seconds / 60)).padStart(2, '0');
-        const s = String(seconds % 60).padStart(2, '0');
-        document.getElementById('rec-time').textContent = `${m}:${s}`;
-      }, 1000);
-    }
-
-    function stopTimer() {
-      clearInterval(timerInterval);
-      timerInterval = null;
-    }
-
-    // Hook into button events to toggle UI state
-    const _btnRecord = document.getElementById('btn-record');
-    const _btnStop = document.getElementById('btn-stop');
-    const _recIndicator = document.getElementById('rec-indicator');
-    const _statusIcon = document.getElementById('status-icon');
-
-    _btnRecord.addEventListener('click', () => {
-      setTimeout(() => {
-        _recIndicator.classList.add('active');
-        _statusIcon.classList.add('recording');
-        startTimer();
-      }, 300);
-    });
-
-    _btnStop.addEventListener('click', () => {
-      _recIndicator.classList.remove('active');
-      _statusIcon.classList.remove('recording');
-      stopTimer();
-    });
-  </script>
 </body>
 </html>
