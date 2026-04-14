@@ -22,6 +22,7 @@
       --red-dim: rgba(239, 68, 68, 0.12);
       --red-glow: rgba(239, 68, 68, 0.3);
       --green: #22c55e;
+      --green-dim: rgba(34, 197, 94, 0.12);
       --text: #f1f5f9;
       --text-mid: #94a3b8;
       --text-dim: #475569;
@@ -49,7 +50,6 @@
       -webkit-app-region: drag;
       flex-shrink: 0;
     }
-
     .titlebar-brand {
       font-family: 'Rajdhani', sans-serif;
       font-size: 1.1rem;
@@ -59,9 +59,7 @@
       color: var(--text);
       -webkit-app-region: no-drag;
     }
-
     .titlebar-brand span { color: var(--violet); }
-
     .titlebar-tag {
       font-size: 0.58rem;
       letter-spacing: 0.18em;
@@ -71,13 +69,16 @@
 
     /* ── SCREENS ──────────────────────────────── */
     #screen-home,
-    #screen-recording {
+    #screen-recording,
+    #screen-analyzing,
+    #screen-analysis-result,
+    #screen-generating,
+    #screen-skill-result,
+    #screen-error {
       flex: 1;
-      display: flex;
+      display: none;
       overflow: hidden;
     }
-
-    #screen-recording { display: none; }
 
     /* ── HOME SCREEN ──────────────────────────── */
     .home-content {
@@ -90,8 +91,6 @@
       padding: 48px;
       position: relative;
     }
-
-    /* Grid background */
     .home-content::before {
       content: '';
       position: absolute;
@@ -103,338 +102,324 @@
       mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, black 30%, transparent 100%);
       pointer-events: none;
     }
-
-    /* Violet ambient glow */
     .home-content::after {
       content: '';
       position: absolute;
-      width: 500px;
-      height: 500px;
-      background: radial-gradient(ellipse, rgba(109, 40, 217, 0.1) 0%, transparent 70%);
-      top: 50%;
-      left: 50%;
+      width: 500px; height: 500px;
+      background: radial-gradient(ellipse, rgba(109,40,217,0.1) 0%, transparent 70%);
+      top: 50%; left: 50%;
       transform: translate(-50%, -50%);
       pointer-events: none;
     }
-
-    .home-hero {
-      position: relative;
-      z-index: 1;
-      text-align: center;
-      margin-bottom: 44px;
-    }
-
+    .home-hero { position: relative; z-index: 1; text-align: center; margin-bottom: 44px; }
     .home-title {
       font-family: 'Rajdhani', sans-serif;
-      font-size: 3.4rem;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      line-height: 1;
-      text-transform: uppercase;
-      margin-bottom: 6px;
+      font-size: 3.4rem; font-weight: 700;
+      letter-spacing: 0.06em; line-height: 1;
+      text-transform: uppercase; margin-bottom: 6px;
     }
-
     .home-title span { color: var(--violet); }
-
     .home-version {
-      font-size: 0.58rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--violet);
-      border: 1px solid var(--border-bright);
-      display: inline-block;
-      padding: 3px 10px;
-      border-radius: 2px;
-      background: var(--violet-dim);
-      margin-bottom: 24px;
+      font-size: 0.58rem; letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--violet); border: 1px solid var(--border-bright);
+      display: inline-block; padding: 3px 10px; border-radius: 2px;
+      background: var(--violet-dim); margin-bottom: 24px;
     }
-
-    .home-desc {
-      font-size: 0.72rem;
-      color: var(--text-mid);
-      line-height: 1.9;
-      letter-spacing: 0.02em;
-      font-weight: 300;
-    }
-
-    /* Record button */
+    .home-desc { font-size: 0.72rem; color: var(--text-mid); line-height: 1.9; letter-spacing: 0.02em; font-weight: 300; }
     .btn-start {
-      position: relative;
-      z-index: 1;
-      display: flex;
-      align-items: center;
-      gap: 12px;
+      position: relative; z-index: 1;
+      display: flex; align-items: center; gap: 12px;
       padding: 15px 36px;
-      background: transparent;
-      border: 1px solid rgba(239, 68, 68, 0.4);
-      border-radius: 2px;
+      background: transparent; border: 1px solid rgba(239,68,68,0.4); border-radius: 2px;
       color: var(--red);
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 1rem;
-      font-weight: 600;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      cursor: pointer;
+      font-family: 'Rajdhani', sans-serif; font-size: 1rem; font-weight: 600;
+      letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer;
       transition: all 0.2s ease;
     }
-
-    .btn-start:hover {
-      background: var(--red-dim);
-      border-color: rgba(239, 68, 68, 0.7);
-      box-shadow: 0 0 24px var(--red-glow);
-    }
-
+    .btn-start:hover { background: var(--red-dim); border-color: rgba(239,68,68,0.7); box-shadow: 0 0 24px var(--red-glow); }
     .btn-start-dot {
-      width: 8px;
-      height: 8px;
-      background: var(--red);
-      border-radius: 50%;
-      box-shadow: 0 0 8px var(--red);
-      animation: pulse-dot 2s ease-in-out infinite;
+      width: 8px; height: 8px; background: var(--red); border-radius: 50%;
+      box-shadow: 0 0 8px var(--red); animation: pulse-dot 2s ease-in-out infinite;
     }
-
-    /* Steps */
-    .steps {
-      position: relative;
-      z-index: 1;
-      display: flex;
-      gap: 8px;
-      margin-top: 40px;
-    }
-
+    .steps { position: relative; z-index: 1; display: flex; gap: 8px; margin-top: 40px; }
     .step {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 14px;
-      background: var(--bg-1);
-      border: 1px solid var(--border);
-      border-radius: 2px;
-      font-size: 0.6rem;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--text-dim);
+      display: flex; align-items: center; gap: 8px; padding: 8px 14px;
+      background: var(--bg-1); border: 1px solid var(--border); border-radius: 2px;
+      font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim);
     }
-
-    .step-num {
-      font-size: 0.58rem;
-      color: var(--violet);
-    }
+    .step-num { font-size: 0.58rem; color: var(--violet); }
 
     /* ── RECORDING SCREEN ─────────────────────── */
-    .recording-layout {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
+    .recording-layout { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
     .rec-hud {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 20px;
-      background: var(--bg-1);
-      border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 20px; background: var(--bg-1); border-bottom: 1px solid var(--border); flex-shrink: 0;
     }
-
+    .rec-hud-left  { display: flex; align-items: center; gap: 12px; }
+    .rec-hud-right { display: flex; align-items: center; gap: 10px; }
     .rec-badge {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--red-dim);
-      border: 1px solid rgba(239, 68, 68, 0.35);
-      border-radius: 2px;
-      padding: 5px 12px;
+      display: flex; align-items: center; gap: 8px;
+      background: var(--red-dim); border: 1px solid rgba(239,68,68,0.35); border-radius: 2px; padding: 5px 12px;
     }
-
-    .rec-dot {
-      width: 7px;
-      height: 7px;
-      background: var(--red);
-      border-radius: 50%;
-      box-shadow: 0 0 8px var(--red);
-      animation: blink 1.2s ease-in-out infinite;
-    }
-
-    .rec-label {
-      font-size: 0.58rem;
-      font-weight: 500;
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
-      color: var(--red);
-    }
-
-    .rec-timer {
-      font-size: 1.5rem;
-      font-weight: 300;
-      letter-spacing: 0.08em;
-      color: var(--text);
-      font-variant-numeric: tabular-nums;
-    }
-
+    .rec-dot { width: 7px; height: 7px; background: var(--red); border-radius: 50%; box-shadow: 0 0 8px var(--red); animation: blink 1.2s ease-in-out infinite; }
+    .rec-label { font-size: 0.58rem; font-weight: 500; letter-spacing: 0.22em; text-transform: uppercase; color: var(--red); }
+    .rec-timer { font-size: 1.5rem; font-weight: 300; letter-spacing: 0.08em; color: var(--text); font-variant-numeric: tabular-nums; }
     .rec-timer span { color: var(--text-dim); }
-
+    .click-counter-badge {
+      font-size: 0.58rem; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--violet); background: var(--violet-dim);
+      border: 1px solid var(--border-bright); border-radius: 2px; padding: 4px 10px;
+    }
     .btn-cancel {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 7px 18px;
-      background: transparent;
-      border: 1px solid var(--border-bright);
-      border-radius: 2px;
-      color: var(--text-mid);
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.65rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: all 0.2s ease;
+      display: flex; align-items: center; gap: 8px; padding: 7px 18px;
+      background: transparent; border: 1px solid var(--border-bright); border-radius: 2px;
+      color: var(--text-mid); font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+      letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; transition: all 0.2s ease;
     }
-
-    .btn-cancel:hover {
-      border-color: rgba(239, 68, 68, 0.5);
-      color: var(--red);
-      background: var(--red-dim);
+    .btn-cancel:hover { border-color: rgba(239,68,68,0.5); color: var(--red); background: var(--red-dim); }
+    .btn-stop-analyze {
+      display: flex; align-items: center; gap: 8px; padding: 7px 18px;
+      background: var(--violet-dim); border: 1px solid var(--border-bright); border-radius: 2px;
+      color: var(--violet); font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+      letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; transition: all 0.2s ease;
     }
+    .btn-stop-analyze:hover:not(:disabled) { background: rgba(139,92,246,0.25); box-shadow: 0 0 16px var(--violet-glow); }
+    .btn-stop-analyze:disabled { opacity: 0.35; cursor: not-allowed; }
 
     /* Viewfinder */
     .viewfinder-wrap {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      background: #080910;
-      position: relative;
-      overflow: hidden;
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      padding: 20px; background: #080910; position: relative; overflow: hidden;
     }
-
-    /* Scan lines */
     .viewfinder-wrap::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 2px,
-        rgba(0, 0, 0, 0.07) 2px,
-        rgba(0, 0, 0, 0.07) 4px
-      );
-      pointer-events: none;
-      z-index: 10;
+      content: ''; position: absolute; inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.07) 2px, rgba(0,0,0,0.07) 4px);
+      pointer-events: none; z-index: 10;
     }
-
-    /* Moving scan line */
     .viewfinder-wrap::after {
-      content: '';
-      position: absolute;
-      left: 0; right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.5), transparent);
-      animation: scanline 4s linear infinite;
-      z-index: 11;
-      pointer-events: none;
+      content: ''; position: absolute; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(139,92,246,0.5), transparent);
+      animation: scanline 4s linear infinite; z-index: 11; pointer-events: none;
     }
-
-    .viewfinder {
-      position: relative;
-      width: 100%;
-      max-height: 100%;
-      aspect-ratio: 16/9;
-    }
-
-    #preview {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      display: block;
-      border-radius: 2px;
-      background: var(--bg-2);
-    }
-
-    /* Corner brackets — violet */
-    .corner {
-      position: absolute;
-      width: 16px;
-      height: 16px;
-      border-color: var(--violet);
-      border-style: solid;
-      z-index: 12;
-    }
-
-    .corner-tl { top: -1px; left: -1px;   border-width: 2px 0 0 2px; }
-    .corner-tr { top: -1px; right: -1px;  border-width: 2px 2px 0 0; }
-    .corner-bl { bottom: -1px; left: -1px;  border-width: 0 0 2px 2px; }
-    .corner-br { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
-
-    .vf-label-tl, .vf-label-tr,
-    .vf-label-bl, .vf-label-br {
-      position: absolute;
-      font-size: 0.52rem;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      z-index: 12;
-    }
-
+    .viewfinder { position: relative; width: 100%; max-height: 100%; aspect-ratio: 16/9; }
+    #preview { width: 100%; height: 100%; object-fit: contain; display: block; border-radius: 2px; background: var(--bg-2); }
+    .corner { position: absolute; width: 16px; height: 16px; border-color: var(--violet); border-style: solid; z-index: 12; }
+    .corner-tl { top: -1px; left: -1px;    border-width: 2px 0 0 2px; }
+    .corner-tr { top: -1px; right: -1px;   border-width: 2px 2px 0 0; }
+    .corner-bl { bottom: -1px; left: -1px;   border-width: 0 0 2px 2px; }
+    .corner-br { bottom: -1px; right: -1px;  border-width: 0 2px 2px 0; }
+    .vf-label-tl, .vf-label-tr, .vf-label-bl, .vf-label-br { position: absolute; font-size: 0.52rem; letter-spacing: 0.14em; text-transform: uppercase; z-index: 12; }
     .vf-label-tl { top: 8px; left: 8px; color: var(--violet); }
     .vf-label-tr { top: 8px; right: 8px; color: var(--text-dim); text-align: right; }
     .vf-label-bl { bottom: 8px; left: 8px; color: var(--text-dim); }
     .vf-label-br { bottom: 8px; right: 8px; color: var(--green); text-align: right; }
-
-    /* Status bar */
     .rec-statusbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 7px 20px;
-      background: var(--bg-1);
-      border-top: 1px solid var(--border);
-      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 7px 20px; background: var(--bg-1); border-top: 1px solid var(--border); flex-shrink: 0;
     }
+    .statusbar-item { display: flex; align-items: center; gap: 6px; font-size: 0.58rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); }
+    .statusbar-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); box-shadow: 0 0 5px var(--green); }
 
-    .statusbar-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.58rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--text-dim);
+    /* ── SCR-03: ANALYZING ────────────────────── */
+    .loading-screen {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 24px;
+      background: var(--bg-0);
     }
-
-    .statusbar-dot {
-      width: 5px; height: 5px;
+    .spinner-ring {
+      width: 56px; height: 56px;
+      border: 2px solid var(--border);
+      border-top-color: var(--violet);
       border-radius: 50%;
-      background: var(--green);
-      box-shadow: 0 0 5px var(--green);
+      animation: spin 0.9s linear infinite;
     }
+    .loading-title {
+      font-family: 'Rajdhani', sans-serif; font-size: 1.4rem; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--text);
+    }
+    .loading-sub { font-size: 0.62rem; color: var(--text-dim); letter-spacing: 0.1em; }
+
+    /* ── SCR-04: ANALYSIS RESULT ──────────────── */
+    .analysis-layout {
+      flex: 1; display: flex; flex-direction: column; overflow: hidden;
+    }
+    .analysis-header {
+      padding: 16px 28px; border-bottom: 1px solid var(--border);
+      background: var(--bg-1); flex-shrink: 0;
+    }
+    .analysis-header h2 {
+      font-family: 'Rajdhani', sans-serif; font-size: 1.1rem; font-weight: 600;
+      letter-spacing: 0.12em; text-transform: uppercase; color: var(--violet);
+    }
+    .analysis-body {
+      flex: 1; overflow-y: auto; padding: 24px 28px; display: flex; flex-direction: column; gap: 28px;
+    }
+    .section-label {
+      font-size: 0.58rem; letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--text-dim); margin-bottom: 10px;
+    }
+    .workflow-name {
+      font-family: 'Rajdhani', sans-serif; font-size: 1.3rem; font-weight: 700;
+      color: var(--text); margin-bottom: 6px;
+    }
+    .workflow-desc { font-size: 0.7rem; color: var(--text-mid); line-height: 1.7; }
+    .steps-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+    .steps-list li {
+      font-size: 0.66rem; color: var(--text-mid); padding: 6px 10px;
+      background: var(--bg-1); border-left: 2px solid var(--border-bright); border-radius: 0 2px 2px 0;
+    }
+    .step-action { color: var(--violet); font-weight: 500; }
+
+    .question-card {
+      background: var(--bg-1); border: 1px solid var(--border); border-radius: 2px;
+      padding: 16px; display: flex; flex-direction: column; gap: 10px;
+    }
+    .question-text { font-size: 0.72rem; color: var(--text); line-height: 1.6; }
+    .question-ctx  { font-size: 0.6rem; color: var(--text-dim); line-height: 1.5; }
+    .question-answers { display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap; }
+    .btn-answer {
+      padding: 6px 18px; background: transparent;
+      border: 1px solid var(--border-bright); border-radius: 2px;
+      color: var(--text-mid); font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+      letter-spacing: 0.1em; cursor: pointer; transition: all 0.15s ease;
+    }
+    .btn-answer:hover { border-color: var(--violet); color: var(--violet); }
+    .btn-answer.active { background: var(--violet-dim); border-color: var(--violet); color: var(--violet); }
+    .answer-textarea {
+      flex: 1; min-width: 200px; background: var(--bg-2);
+      border: 1px solid var(--border); border-radius: 2px; color: var(--text);
+      font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+      padding: 6px 10px; resize: vertical; min-height: 38px;
+    }
+    .answer-textarea:focus { outline: none; border-color: var(--border-bright); }
+    .answer-textarea::placeholder { color: var(--text-dim); }
+
+    .analysis-footer {
+      padding: 16px 28px; border-top: 1px solid var(--border);
+      background: var(--bg-1); flex-shrink: 0; display: flex; justify-content: flex-end;
+    }
+    .btn-generate {
+      padding: 10px 28px; background: var(--violet-dim);
+      border: 1px solid var(--border-bright); border-radius: 2px;
+      color: var(--violet); font-family: 'Rajdhani', sans-serif; font-size: 1rem; font-weight: 600;
+      letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; transition: all 0.2s ease;
+    }
+    .btn-generate:hover:not(:disabled) { background: rgba(139,92,246,0.25); box-shadow: 0 0 20px var(--violet-glow); }
+    .btn-generate:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    /* ── SCR-05: GENERATING — same as SCR-03 ──── */
+
+    /* ── SCR-06: SKILL RESULT ─────────────────── */
+    .skill-layout { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .skill-header {
+      padding: 16px 28px; border-bottom: 1px solid var(--border);
+      background: var(--bg-1); flex-shrink: 0; display: flex; align-items: center; gap: 14px;
+    }
+    .skill-header-name {
+      font-family: 'Rajdhani', sans-serif; font-size: 1.2rem; font-weight: 700;
+      letter-spacing: 0.08em; color: var(--text);
+    }
+    .skill-badge {
+      font-size: 0.52rem; letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--green); border: 1px solid rgba(34,197,94,0.35);
+      background: var(--green-dim); padding: 3px 8px; border-radius: 2px;
+    }
+    .skill-filename-badge {
+      font-size: 0.6rem; color: var(--text-dim); letter-spacing: 0.05em;
+    }
+    .skill-body { flex: 1; overflow-y: auto; padding: 24px 28px; display: flex; flex-direction: column; gap: 24px; }
+
+    .code-block {
+      background: var(--bg-1); border: 1px solid var(--border); border-radius: 2px;
+      overflow: auto; max-height: 260px;
+    }
+    .code-block pre { padding: 16px; font-size: 0.65rem; line-height: 1.7; white-space: pre; }
+    .hl-key     { color: var(--violet); }
+    .hl-punct   { color: var(--text-dim); }
+    .hl-str     { color: var(--green); }
+    .hl-comment { color: var(--text-dim); font-style: italic; }
+    .hl-header  { color: var(--violet); font-weight: bold; }
+
+    .install-section { display: flex; flex-direction: column; gap: 12px; }
+    .install-path-tag {
+      font-size: 0.62rem; color: var(--green); background: var(--green-dim);
+      border: 1px solid rgba(34,197,94,0.25); border-radius: 2px; padding: 4px 10px;
+      display: inline-flex; width: fit-content;
+    }
+    .btn-install-auto {
+      padding: 9px 22px; background: var(--green-dim);
+      border: 1px solid rgba(34,197,94,0.4); border-radius: 2px;
+      color: var(--green); font-family: 'Rajdhani', sans-serif; font-size: 0.95rem; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; transition: all 0.2s ease;
+      display: flex; align-items: center; gap: 8px; width: fit-content;
+    }
+    .btn-install-auto:hover:not(:disabled) { box-shadow: 0 0 16px rgba(34,197,94,0.25); background: rgba(34,197,94,0.2); }
+    .btn-install-auto.installed { opacity: 0.7; cursor: default; }
+    .install-usage {
+      font-size: 0.65rem; color: var(--text-mid); padding: 10px 14px;
+      background: var(--bg-1); border-left: 2px solid var(--violet); border-radius: 0 2px 2px 0;
+    }
+    .install-usage code { color: var(--violet); }
+    .manual-steps { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .manual-steps li { font-size: 0.65rem; color: var(--text-mid); display: flex; gap: 10px; }
+    .inst-num {
+      color: var(--violet); font-size: 0.58rem; min-width: 18px;
+      font-family: 'Rajdhani', sans-serif; font-weight: 600;
+    }
+
+    .skill-footer {
+      padding: 14px 28px; border-top: 1px solid var(--border);
+      background: var(--bg-1); flex-shrink: 0; display: flex; gap: 10px; justify-content: flex-end;
+    }
+    .btn-secondary {
+      padding: 8px 20px; background: transparent;
+      border: 1px solid var(--border-bright); border-radius: 2px;
+      color: var(--text-mid); font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+      letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; transition: all 0.15s ease;
+    }
+    .btn-secondary:hover { border-color: var(--violet); color: var(--violet); }
+    .btn-primary {
+      padding: 8px 22px; background: var(--violet-dim);
+      border: 1px solid var(--border-bright); border-radius: 2px;
+      color: var(--violet); font-family: 'Rajdhani', sans-serif; font-size: 0.95rem; font-weight: 600;
+      letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; transition: all 0.2s ease;
+    }
+    .btn-primary:hover { background: rgba(139,92,246,0.25); box-shadow: 0 0 14px var(--violet-glow); }
+
+    /* ── ERROR SCREEN ─────────────────────────── */
+    .error-layout {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 20px; padding: 48px;
+    }
+    .error-icon { font-size: 2rem; color: var(--red); }
+    .error-title {
+      font-family: 'Rajdhani', sans-serif; font-size: 1.3rem; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--red);
+    }
+    #error-message {
+      font-size: 0.68rem; color: var(--text-mid); text-align: center; max-width: 480px; line-height: 1.7;
+    }
+    .error-actions { display: flex; gap: 10px; margin-top: 8px; }
+
+    /* ── SHARED SCROLLBAR ─────────────────────── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg-0); }
+    ::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
 
     /* ── ANIMATIONS ───────────────────────────── */
-    @keyframes pulse-dot {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.5; transform: scale(0.75); }
-    }
+    @keyframes pulse-dot  { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.75)} }
+    @keyframes blink      { 0%,100%{opacity:1} 50%{opacity:.15} }
+    @keyframes scanline   { 0%{top:-1px} 100%{top:100%} }
+    @keyframes spin       { to{transform:rotate(360deg)} }
+    @keyframes fadeIn     { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
 
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.15; }
-    }
-
-    @keyframes scanline {
-      0% { top: -1px; }
-      100% { top: 100%; }
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    #screen-home      { animation: fadeIn 0.35s ease both; }
-    #screen-recording { animation: fadeIn 0.25s ease both; }
+    #screen-home,
+    #screen-recording,
+    #screen-analyzing,
+    #screen-analysis-result,
+    #screen-generating,
+    #screen-skill-result,
+    #screen-error { animation: fadeIn 0.3s ease both; }
   </style>
 </head>
 <body>
@@ -445,45 +430,50 @@
     <div class="titlebar-tag">Screen → AI Skill · v0.1</div>
   </div>
 
-  <!-- HOME SCREEN -->
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- SCR-01: HOME                               -->
+  <!-- ═══════════════════════════════════════════ -->
   <div id="screen-home">
     <div class="home-content">
-
       <div class="home-hero">
         <div class="home-version">Alpha · Hackathon Build</div>
         <h1 class="home-title">Grabá.<br><span>Enseñá.</span><br>Automatizá.</h1>
       </div>
-
       <p class="home-desc" style="position:relative;z-index:1;text-align:center;margin-bottom:36px;">
         Mostrá tu flujo de trabajo en pantalla.<br>
-        La IA lo convierte en un skill reutilizable.
+        La IA lo convierte en un skill reutilizable para Claude Code.
       </p>
-
       <button class="btn-start" id="btn-record">
         <div class="btn-start-dot"></div>
         Iniciar grabación
       </button>
-
       <div class="steps">
         <div class="step"><span class="step-num">01</span> Grabá</div>
         <div class="step"><span class="step-num">02</span> IA analiza</div>
         <div class="step"><span class="step-num">03</span> Skill listo</div>
       </div>
-
     </div>
   </div>
 
-  <!-- RECORDING SCREEN -->
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- SCR-02: RECORDING                          -->
+  <!-- ═══════════════════════════════════════════ -->
   <div id="screen-recording">
     <div class="recording-layout">
 
       <div class="rec-hud">
-        <div class="rec-badge">
-          <div class="rec-dot"></div>
-          <span class="rec-label">Grabando</span>
+        <div class="rec-hud-left">
+          <div class="rec-badge">
+            <div class="rec-dot"></div>
+            <span class="rec-label">Grabando</span>
+          </div>
+          <div class="rec-timer" id="rec-timer">00<span>:</span>00</div>
+          <div class="click-counter-badge" id="click-counter">0 clicks</div>
         </div>
-        <div class="rec-timer" id="rec-timer">00<span>:</span>00</div>
-        <button class="btn-cancel" id="btn-cancel">✕ &nbsp;Cancelar</button>
+        <div class="rec-hud-right">
+          <button class="btn-stop-analyze" id="btn-stop-analyze" disabled>▶ Detener y Analizar</button>
+          <button class="btn-cancel" id="btn-cancel">✕ Cancelar</button>
+        </div>
       </div>
 
       <div class="viewfinder-wrap">
@@ -502,14 +492,142 @@
       </div>
 
       <div class="rec-statusbar">
-        <div class="statusbar-item">
-          <div class="statusbar-dot"></div>
-          Stream activo
-        </div>
+        <div class="statusbar-item"><div class="statusbar-dot"></div>Stream activo</div>
         <div class="statusbar-item" id="sb-size">0 chunks · 0.0 MB</div>
         <div class="statusbar-item">desktopCapturer</div>
       </div>
 
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- SCR-03: ANALYZING                          -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div id="screen-analyzing">
+    <div class="loading-screen">
+      <div class="spinner-ring"></div>
+      <div class="loading-title">Analizando workflow…</div>
+      <div class="loading-sub" id="analyzing-frames">Enviando frames a Claude…</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- SCR-04: ANALYSIS RESULT                    -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div id="screen-analysis-result">
+    <div class="analysis-layout">
+
+      <div class="analysis-header">
+        <h2>Workflow detectado · confirma y respondé</h2>
+      </div>
+
+      <div class="analysis-body">
+
+        <!-- Workflow summary -->
+        <div>
+          <div class="section-label">Workflow detectado</div>
+          <div class="workflow-name" id="wr-name">—</div>
+          <div class="workflow-desc" id="wr-desc"></div>
+        </div>
+
+        <!-- Steps -->
+        <div>
+          <div class="section-label">Pasos identificados</div>
+          <ul class="steps-list" id="wr-steps"></ul>
+        </div>
+
+        <!-- 3 questions -->
+        <div>
+          <div class="section-label">3 preguntas para clarificar el flujo</div>
+          <div style="display:flex;flex-direction:column;gap:12px;" id="wr-questions"></div>
+        </div>
+
+      </div>
+
+      <div class="analysis-footer">
+        <button class="btn-generate" id="btn-generate-skill" disabled>Generar Skill →</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- SCR-05: GENERATING                         -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div id="screen-generating">
+    <div class="loading-screen">
+      <div class="spinner-ring"></div>
+      <div class="loading-title">Generando skill…</div>
+      <div class="loading-sub">Claude está empaquetando el workflow en un .md</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- SCR-06: SKILL RESULT                       -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div id="screen-skill-result">
+    <div class="skill-layout">
+
+      <div class="skill-header">
+        <div class="skill-header-name" id="sr-name">skill-name</div>
+        <div class="skill-badge">v1.0</div>
+        <div class="skill-filename-badge" id="sr-filename"></div>
+      </div>
+
+      <div class="skill-body">
+
+        <!-- Code block -->
+        <div>
+          <div class="section-label">Contenido del skill (.md)</div>
+          <div class="code-block"><pre id="sr-code"></pre></div>
+        </div>
+
+        <!-- Install in Claude Code -->
+        <div class="install-section">
+          <div class="section-label">Instalar en Claude Code</div>
+
+          <!-- Auto install (shown when ~/.claude/skills/ exists) -->
+          <div id="sr-auto-install" style="display:none;flex-direction:column;gap:10px;">
+            <div class="install-path-tag" id="sr-install-path">~/.claude/skills/</div>
+            <button class="btn-install-auto" id="btn-install-auto">
+              ↓ Instalar automáticamente
+            </button>
+            <div class="install-usage">
+              Una vez instalado, invocá el skill con <code>/<span id="sr-usage-name">skill-name</span></code> en cualquier sesión de Claude Code.
+            </div>
+          </div>
+
+          <!-- Manual install (shown when directory doesn't exist) -->
+          <div id="sr-manual-install" style="display:none;flex-direction:column;gap:10px;">
+            <ol class="manual-steps" id="sr-install-steps"></ol>
+            <div class="install-usage">
+              Una vez instalado, invocá el skill con <code>/<span id="sr-usage-name-manual">skill-name</span></code> en cualquier sesión de Claude Code.
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="skill-footer">
+        <button class="btn-secondary" id="btn-new-recording">+ Nueva grabación</button>
+        <button class="btn-primary" id="btn-download-skill">↓ Descargar .md</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- ERROR SCREEN                               -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div id="screen-error">
+    <div class="error-layout">
+      <div class="error-icon">⚠</div>
+      <div class="error-title">Algo salió mal</div>
+      <div id="error-message"></div>
+      <div class="error-actions">
+        <button class="btn-secondary" id="btn-error-home">← Volver al inicio</button>
+        <button class="btn-primary" id="btn-error-retry" style="display:none;">↺ Reintentar</button>
+      </div>
     </div>
   </div>
 

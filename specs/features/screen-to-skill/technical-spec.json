@@ -1,0 +1,337 @@
+{
+  "feature_id": "screen-to-skill",
+  "spec_type": "technical",
+  "version": "1.0.0",
+  "status": "draft",
+  "date": "2026-04-14",
+  "based_on": "functional-spec.json v1.0.0",
+
+  "architecture": {
+    "overview": "Electron app (TypeScript). Sin backend externo. La lógica de IA vive en el proceso main de Electron usando @anthropic-ai/sdk directamente. La UI vive en el renderer process y se comunica con main vía IPC (contextBridge). El estado de la sesión (frames capturados, análisis, respuestas) vive en memoria durante la sesión.",
+    "process_split": {
+      "main_process": [
+        "IPC handlers existentes: get-sources, save-recording",
+        "NUEVO IPC handler: analyze-workflow — recibe frames[], llama Agente 1, devuelve WorkflowAnalysis",
+        "NUEVO IPC handler: generate-skill — recibe WorkflowAnalysis + UserAnswers[], llama Agente 2, devuelve SkillOutput",
+        "NUEVO IPC handler: save-skill-file — recibe content string + filename, escribe .md en disco vía dialog.showSaveDialog",
+        "NUEVO IPC handler: install-skill — copia el .md directamente a ~/.claude/skills/<skill-name>.md",
+        "NUEVO IPC handler: check-claude-code-path — verifica si ~/.claude/skills/ existe en el sistema",
+        "NUEVO IPC handler: get-api-key-status — verifica si ANTHROPIC_API_KEY está seteada"
+      ],
+      "renderer_process": [
+        "Gestión de estado de la sesión (capturedFrames[], currentScreen)",
+        "Listener de clicks sobre el video/canvas para trigger de frame capture",
+        "Renderizado de las 6 pantallas: Home, Recording, Analyzing, AnalysisResult, Generating, SkillResult",
+        "Formulario de respuestas a las 3 preguntas"
+      ],
+      "preload": [
+        "Exponer en parrotAPI: analyzeWorkflow, generateSkill, saveSkillFile, installSkill, checkClaudeCodePath, getApiKeyStatus (nuevos)",
+        "Mantener: getSources, saveRecording (existentes)"
+      ]
+    }
+  },
+
+  "data_contracts": {
+    "CapturedFrame": {
+      "description": "Un screenshot capturado en el momento de un click durante la grabación",
+      "shape": {
+        "seq": "number — número de secuencia (1, 2, 3...)",
+        "timestamp_ms": "number — milisegundos desde el inicio de la grabación",
+        "image_base64": "string — screenshot en base64 (JPEG, calidad 0.7, max 1280x720)",
+        "click_x": "number — coordenada X del click en el canvas/video (píxeles)",
+        "click_y": "number — coordenada Y del click en el canvas/video (píxeles)",
+        "click_x_pct": "number — coordenada X como porcentaje del viewport (0-1)",
+        "click_y_pct": "number — coordenada Y como porcentaje del viewport (0-1)"
+      }
+    },
+    "WorkflowAnalysis": {
+      "description": "Output del Agente 1. JSON estructurado que Claude debe retornar.",
+      "shape": {
+        "workflow_name": "string — nombre corto del workflow detectado (ej: 'Exportar reporte mensual')",
+        "workflow_description": "string — descripción de 1-2 oraciones del objetivo del workflow",
+        "detected_apps": "string[] — aplicaciones o contextos detectados en los screenshots",
+        "steps": [
+          {
+            "id": "number",
+            "action": "string — verbo semántico (navegar, hacer click, escribir, seleccionar, abrir, etc.)",
+            "description": "string — qué se hace en este paso en lenguaje natural"
+          }
+        ],
+        "detected_inputs": [
+          {
+            "name": "string",
+            "description": "string"
+          }
+        ],
+        "clarifying_questions": [
+          {
+            "id": "number — siempre 1, 2, 3",
+            "question": "string — pregunta puntual sobre el flujo",
+            "context": "string — por qué se hace esta pregunta (qué ambigüedad resuelve)"
+          }
+        ]
+      },
+      "constraints": [
+        "clarifying_questions SIEMPRE tiene exactamente 3 items",
+        "steps tiene entre 2 y 20 items",
+        "workflow_name máximo 60 caracteres"
+      ]
+    },
+    "UserAnswer": {
+      "description": "Respuesta del usuario a una pregunta de clarificación",
+      "shape": {
+        "question_id": "number — 1, 2 o 3",
+        "answer": "string — 'yes' | 'no' | comentario libre (max 500 chars)"
+      }
+    },
+    "SkillOutput": {
+      "description": "Output del Agente 2. El skill final listo para descargar.",
+      "shape": {
+        "skill_name": "string — nombre del skill sin extensión (kebab-case, ej: exportar-reporte-mensual)",
+        "skill_content": "string — contenido completo del archivo .md: título markdown + bloque YAML con la definición del skill",
+        "skill_filename": "string — nombre del archivo con extensión .md (ej: exportar-reporte-mensual.md)",
+        "claude_code_instructions": "string[] — lista de pasos para instalar el skill en Claude Code (CLI)"
+      }
+    },
+    "IPCPayloads": {
+      "analyze-workflow-request": {
+        "frames": "CapturedFrame[] — máximo 15 frames; si hay más, se samplea uniformemente",
+        "recording_duration_ms": "number",
+        "total_clicks": "number"
+      },
+      "generate-skill-request": {
+        "analysis": "WorkflowAnalysis",
+        "answers": "UserAnswer[]"
+      }
+    }
+  },
+
+  "claude_api_integration": {
+    "sdk": "@anthropic-ai/sdk (ya instalado)",
+    "model": "claude-opus-4-6",
+    "api_key_source": "process.env.ANTHROPIC_API_KEY — leída en el proceso main de Electron",
+
+    "agent_1_workflow_analyzer": {
+      "id": "agent-1",
+      "purpose": "Analizar los frames capturados durante la grabación y entender el workflow",
+      "call_type": "messages.create con vision (imágenes base64)",
+      "system_prompt": "You are a workflow analysis expert. You receive screenshots captured at click events during a screen recording session. Your job is to understand what workflow the user is performing and return a structured JSON analysis.\n\nRules:\n- Analyze the sequence of screenshots to understand the user's intent, not just the individual clicks\n- Identify the semantic meaning of each action (not 'clicked at x,y' but 'opened the export menu')\n- Generate EXACTLY 3 clarifying questions that would help remove ambiguity about the workflow\n- Questions should focus on: edge cases, variable inputs, or decision branches you detected but couldn't confirm\n- Return ONLY valid JSON matching the WorkflowAnalysis schema. No markdown, no explanation, just JSON.",
+      "user_message_template": "I recorded myself performing a workflow on my computer. Here are {N} screenshots captured at click events, in chronological order.\n\nRecording duration: {duration_seconds}s\nTotal clicks captured: {total_clicks}\n\nScreenshots (in order):\n[IMAGES ATTACHED]\n\nAnalyze this workflow and return the JSON analysis.",
+      "images_format": "Cada frame se pasa como image_url con media_type image/jpeg y data base64",
+      "response_format": "JSON — se parsea directamente. Si falla el parse, se reintenta con un mensaje de corrección.",
+      "max_tokens": 2048
+    },
+
+    "agent_2_skill_generator": {
+      "id": "agent-2",
+      "purpose": "Generar el archivo .md final del skill basado en el análisis previo y las respuestas del usuario, listo para instalar en Claude Code",
+      "call_type": "messages.create (texto, sin imágenes)",
+      "system_prompt": "You are an AI Skill generator for Claude Code. You receive a workflow analysis and the user's answers to clarifying questions. Your job is to produce a .md skill file that Claude Code can load and execute.\n\nThe output .md file format:\n```\n# skill-name\n\nBrief description of what this skill does.\n\n```yaml\nname: kebab-case-skill-name\nversion: '1.0'\ndescription: |\n  Clear description of what this skill does.\ncontext:\n  apps:\n    - App Name\n  preconditions:\n    - Condition that must be true before starting\nsteps:\n  - id: 1\n    action: verb\n    target: what to act on\n    description: human-readable explanation\n    decision:\n      if: condition (optional)\n      then: what to do (optional)\ninputs:\n  - name: input_name\n    type: string|date|number|file\n    required: true\n    description: what this input is\noutputs:\n  - name: output_name\n    type: string|file|spreadsheet\n    description: what this output is\n```\n```\n\nRules:\n- Use semantic action verbs: navigate, click, select, type, open, export, import, wait_for\n- Extract variable data into inputs (dates, names, IDs that change each run)\n- Keep steps atomic and executable\n- Return ONLY valid JSON matching the SkillOutput schema. No markdown wrapping the JSON, just the JSON object.\n\nFor claude_code_instructions, provide concrete steps:\n1. Save the .md file to ~/.claude/skills/<skill-name>.md\n2. Invoke the skill in any Claude Code session with: /<skill-name>\n3. Claude Code will load and execute the skill step by step",
+      "user_message_template": "Workflow Analysis:\n{workflow_analysis_json}\n\nUser's answers to clarifying questions:\n{answers_json}\n\nGenerate the .md skill file for Claude Code and return the JSON output.",
+      "max_tokens": 4096
+    }
+  },
+
+  "module_boundaries": {
+    "new_files": [
+      {
+        "path": "src/ai/agent1-analyzer.ts",
+        "responsibility": "Función analyzeWorkflow(frames: CapturedFrame[], meta): Promise<WorkflowAnalysis>. Construye el payload multimodal, llama Claude, parsea y valida el JSON de respuesta. Exporta solo esta función."
+      },
+      {
+        "path": "src/ai/agent2-generator.ts",
+        "responsibility": "Función generateSkill(analysis: WorkflowAnalysis, answers: UserAnswer[]): Promise<SkillOutput>. Construye el prompt de texto, llama Claude, parsea y valida el JSON de respuesta. Exporta solo esta función."
+      },
+      {
+        "path": "src/ai/types.ts",
+        "responsibility": "Definiciones TypeScript de CapturedFrame, WorkflowAnalysis, UserAnswer, SkillOutput. Importada por ambos agentes y por el main process."
+      },
+      {
+        "path": "src/renderer/screens/screen-analyzing.ts",
+        "responsibility": "Lógica y HTML de la pantalla SCR-03 (spinner de análisis)"
+      },
+      {
+        "path": "src/renderer/screens/screen-analysis-result.ts",
+        "responsibility": "Lógica y HTML de la pantalla SCR-04 (análisis + preguntas)"
+      },
+      {
+        "path": "src/renderer/screens/screen-generating.ts",
+        "responsibility": "Lógica y HTML de la pantalla SCR-05 (spinner de generación)"
+      },
+      {
+        "path": "src/renderer/screens/screen-skill-result.ts",
+        "responsibility": "Lógica y HTML de la pantalla SCR-06 (skill + instrucciones + descarga)"
+      }
+    ],
+    "modified_files": [
+      {
+        "path": "src/main.ts",
+        "changes": [
+          "Import analyzeWorkflow from src/ai/agent1-analyzer.ts",
+          "Import generateSkill from src/ai/agent2-generator.ts",
+          "Add ipcMain.handle('analyze-workflow', async (_, payload) => analyzeWorkflow(payload.frames, payload.meta))",
+          "Add ipcMain.handle('generate-skill', async (_, payload) => generateSkill(payload.analysis, payload.answers))",
+          "Add ipcMain.handle('save-skill-file', async (_, { content, filename }) => dialog.showSaveDialog con filtro .md + fs.writeFile)",
+          "Add ipcMain.handle('install-skill', async (_, { content, skillName }) => fs.writeFile a path.join(os.homedir(), '.claude/skills/', skillName + '.md'))",
+          "Add ipcMain.handle('check-claude-code-path', () => fs.existsSync(path.join(os.homedir(), '.claude/skills/')))",
+          "Add ipcMain.handle('get-api-key-status', () => !!process.env.ANTHROPIC_API_KEY)"
+        ]
+      },
+      {
+        "path": "src/preload.ts",
+        "changes": [
+          "Exponer analyzeWorkflow(payload): Promise<WorkflowAnalysis>",
+          "Exponer generateSkill(payload): Promise<SkillOutput>",
+          "Exponer saveSkillFile(content, filename): Promise<void>",
+          "Exponer installSkill(content, skillName): Promise<void>",
+          "Exponer checkClaudeCodePath(): Promise<boolean>",
+          "Exponer getApiKeyStatus(): Promise<boolean>"
+        ]
+      },
+      {
+        "path": "src/renderer/renderer.ts",
+        "changes": [
+          "Agregar listener de clicks sobre el elemento preview/canvas que capture el frame actual del video",
+          "Función captureFrame(): extrae frame del <video> en un <canvas> offscreen y lo convierte a JPEG base64",
+          "Array capturedFrames: CapturedFrame[] en memoria",
+          "Botón 'Detener y Analizar' (nuevo) que llama a parrotAPI.analyzeWorkflow",
+          "Contador de clicks capturados visible en el HUD durante grabación",
+          "Manejo de navegación entre las 6 pantallas (showScreen(id) función centralizada)",
+          "Renderizado de las pantallas SCR-03 a SCR-06 usando los módulos de screens/"
+        ]
+      },
+      {
+        "path": "src/renderer/index.html",
+        "changes": [
+          "Agregar divs para las nuevas pantallas: #screen-analyzing, #screen-analysis-result, #screen-generating, #screen-skill-result",
+          "Agregar botón 'Detener y Analizar' en el HUD de grabación",
+          "Agregar contador de clicks en el HUD de grabación",
+          "Agregar estilos para las nuevas pantallas (inline en el mismo <style> block existente)"
+        ]
+      }
+    ]
+  },
+
+  "frame_capture_strategy": {
+    "trigger": "Evento 'click' en document durante grabación activa",
+    "method": "drawImage del HTMLVideoElement en un OffscreenCanvas, toDataURL('image/jpeg', 0.7)",
+    "max_resolution": "1280x720 — si el stream es mayor, escalar manteniendo aspect ratio",
+    "max_frames_to_api": 15,
+    "sampling_strategy": "Si capturedFrames.length > 15, samplear uniformemente (índices distribuidos a lo largo del array)",
+    "frame_size_estimate": "~50-100KB por frame JPEG a 0.7 quality — 15 frames ≈ 1-1.5MB total payload",
+    "coordinate_capture": "event.offsetX/offsetY en el elemento de video normalizado a porcentaje del viewport"
+  },
+
+  "error_handling": {
+    "cases": [
+      {
+        "scenario": "ANTHROPIC_API_KEY no está seteada",
+        "detection": "getApiKeyStatus() retorna false antes de iniciar grabación o al presionar Detener y Analizar",
+        "handling": "Mostrar banner de error en la UI con mensaje: 'Falta ANTHROPIC_API_KEY. Seteá la variable de entorno y reiniciá la app.'"
+      },
+      {
+        "scenario": "Claude API retorna error (red, rate limit, server error)",
+        "detection": "catch en analyzeWorkflow o generateSkill — Anthropic SDK lanza APIError",
+        "handling": "Mostrar pantalla de error con el mensaje del error y botón 'Reintentar' que vuelve a llamar al agente"
+      },
+      {
+        "scenario": "Claude retorna JSON inválido o no parseable",
+        "detection": "JSON.parse falla en agent1-analyzer.ts o agent2-generator.ts",
+        "handling": "Un solo reintento automático con mensaje adicional al modelo: 'Your previous response was not valid JSON. Return ONLY the JSON object, nothing else.' Si falla de nuevo, propagar como error al renderer."
+      },
+      {
+        "scenario": "Claude retorna JSON válido pero con estructura incorrecta (ej: falta clarifying_questions o tiene != 3 items)",
+        "detection": "Validación manual del shape después del parse",
+        "handling": "Mismo mecanismo de reintento que JSON inválido"
+      },
+      {
+        "scenario": "No se capturaron clicks durante la grabación",
+        "detection": "capturedFrames.length === 0 al presionar Detener",
+        "handling": "Botón 'Detener y Analizar' deshabilitado. Mostrar tooltip: 'Hacé al menos un click en pantalla para capturar el flujo.'"
+      },
+      {
+        "scenario": "Error al guardar el archivo .md en disco o al instalar en ~/.claude/skills/",
+        "detection": "catch en save-skill-file o install-skill IPC handler",
+        "handling": "Mostrar error en la pantalla de resultado. El usuario puede copiar el contenido del skill manualmente desde el bloque de código."
+      }
+    ]
+  },
+
+  "testing_strategy": {
+    "approach": "No hay test runner configurado. Las verificaciones de calidad se hacen manualmente corriendo la app.",
+    "manual_test_cases": [
+      "MT-01: Grabar flujo con 3+ clicks → detener → verificar que aparecen N screenshots en el payload log",
+      "MT-02: Verificar que el JSON retornado por Agente 1 tiene exactamente 3 preguntas",
+      "MT-03: Responder las 3 preguntas y verificar que el skill generado tiene formato YAML válido",
+      "MT-04a: Instalar automáticamente el .md en ~/.claude/skills/ y verificar que el archivo existe con el contenido correcto",
+      "MT-04b: Descargar el .md manualmente y verificar que el archivo se guarda con el nombre correcto",
+      "MT-05: Correr sin ANTHROPIC_API_KEY y verificar que el error se muestra antes de llamar a la API",
+      "MT-06: Cancelar una grabación y verificar que no se llama a la API ni se guardan datos"
+    ],
+    "console_logging": "Agregar logs en main process para cada IPC call: [parrot:agent1] sending N frames, [parrot:agent2] sending analysis + answers"
+  },
+
+  "phased_implementation_plan": [
+    {
+      "phase": 1,
+      "goal": "Tipos + captura de frames durante grabación",
+      "tasks": [
+        "Crear src/ai/types.ts con las interfaces TypeScript",
+        "Modificar renderer.ts: agregar listener de clicks, función captureFrame(), array capturedFrames",
+        "Modificar index.html: agregar botón 'Detener y Analizar' y contador de clicks en HUD",
+        "Verificar en consola que los frames se capturan correctamente"
+      ],
+      "dod": "Durante una grabación, cada click genera un CapturedFrame con imagen base64, coordenadas y timestamp visibles en consola"
+    },
+    {
+      "phase": 2,
+      "goal": "Agente 1 — Análisis de workflow",
+      "tasks": [
+        "Crear src/ai/agent1-analyzer.ts con la función analyzeWorkflow",
+        "Agregar IPC handlers en main.ts: analyze-workflow, get-api-key-status",
+        "Exponer nuevos métodos en preload.ts",
+        "Crear pantalla SCR-03 (Analyzing) y SCR-04 (Analysis Result) en index.html",
+        "Conectar botón 'Detener y Analizar' al flujo completo",
+        "Verificar que la pantalla de análisis muestra resumen + 3 preguntas correctamente"
+      ],
+      "dod": "Flujo Home → Recording → Analyzing → AnalysisResult funciona end-to-end con respuesta real de Claude"
+    },
+    {
+      "phase": 3,
+      "goal": "Agente 2 — Generación del skill",
+      "tasks": [
+        "Crear src/ai/agent2-generator.ts con la función generateSkill",
+        "Agregar IPC handler generate-skill en main.ts",
+        "Crear pantalla SCR-05 (Generating) y SCR-06 (Skill Result) en index.html",
+        "Agregar IPC handler save-skill-file con dialog de guardado",
+        "Exponer saveSkillFile, installSkill y checkClaudeCodePath en preload.ts"
+      ],
+      "dod": "Flujo completo funciona end-to-end: grabación → análisis → respuestas → skill generado → instalación automática en ~/.claude/skills/ o descarga manual del .md"
+    },
+    {
+      "phase": 4,
+      "goal": "Pulir errores y UX",
+      "tasks": [
+        "Implementar todos los casos de error definidos en error_handling",
+        "Agregar validación del shape de respuesta de Claude con reintento automático",
+        "Verificar que 'Cancelar' descarta todo correctamente en cualquier punto del flujo",
+        "Revisar que el estilo visual de las nuevas pantallas es consistente con el existente"
+      ],
+      "dod": "Todos los casos de error muestran mensajes claros. El flujo de cancelación funciona en todas las pantallas."
+    }
+  ],
+
+  "dependencies_and_constraints": {
+    "existing_deps_used": [
+      "@anthropic-ai/sdk ^0.39.0 — llamadas a Claude API",
+      "yaml ^2.7.0 — opcional para validar/parsear el YAML del skill antes de mostrarlo",
+      "electron ^36.0.0 — dialog.showSaveDialog para guardar el .md, fs para instalar en ~/.claude/skills/, os para resolver el home del usuario"
+    ],
+    "new_deps_needed": [],
+    "constraints": [
+      "El proceso renderer NO puede importar @anthropic-ai/sdk directamente (contexto browser, sin Node.js). Toda llamada a la API va por IPC al proceso main.",
+      "Los screenshots se capturan del elemento <video> — solo funciona cuando hay stream real (no en modo simulación). En modo simulación, captureFrame() captura el <canvas> de simulación.",
+      "Electron contextIsolation: true — solo lo que se expone en preload.ts es accesible desde el renderer."
+    ]
+  }
+}
