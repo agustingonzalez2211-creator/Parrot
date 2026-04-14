@@ -1,0 +1,119 @@
+{
+  "feature_id": "overlay-and-optional-questions",
+  "version": "1.0.0",
+  "date": "2026-04-14",
+
+  "features": [
+    {
+      "id": "F1",
+      "name": "Mini overlay de grabación",
+      "description": "Ventana flotante pequeña siempre visible que aparece cuando comienza la grabación, permitiendo al usuario minimizar Parrot y trabajar en otras apps sin perder el control de la sesión.",
+      "scope_in": [
+        "Ventana flotante always-on-top que aparece al iniciar grabación",
+        "Muestra: indicador REC pulsante + timer de grabación",
+        "Botón 'Detener y Analizar' en la overlay",
+        "Botón 'Cancelar' en la overlay",
+        "La overlay se cierra automáticamente cuando la grabación termina (por cualquier motivo)"
+      ],
+      "scope_out": [
+        "Drag/reposicionamiento de la overlay",
+        "Contador de frames en la overlay",
+        "Configuración de posición"
+      ]
+    },
+    {
+      "id": "F2",
+      "name": "Preguntas opcionales con contexto adicional",
+      "description": "Las 3 preguntas de clarificación pasan a ser opcionales: el botón 'Generar Skill' siempre está habilitado. Se agrega un campo libre de contexto adicional para que el usuario aporte información extra al agente.",
+      "scope_in": [
+        "Las 3 preguntas muestran badge 'opcional'",
+        "El botón 'Generar Skill' está habilitado desde que aparece la pantalla de análisis",
+        "Campo de texto libre 'Contexto adicional' al pie de las preguntas",
+        "El contexto adicional y las respuestas vacías se envían al Agente 2"
+      ],
+      "scope_out": [
+        "Cambiar el número de preguntas generadas por Claude",
+        "Validación de respuestas"
+      ]
+    }
+  ],
+
+  "user_journeys": [
+    {
+      "id": "UJ-01",
+      "name": "Grabar con overlay y analizar",
+      "steps": [
+        "Usuario presiona 'Iniciar grabación' en Parrot",
+        "Aparece la pantalla de grabación Y una mini ventana flotante en la esquina inferior derecha",
+        "Usuario minimiza Parrot o lo pone detrás de otras apps",
+        "La mini ventana sigue visible con el timer y los botones",
+        "Cuando termina su workflow, presiona 'Detener y Analizar' en la mini ventana",
+        "La mini ventana se cierra, Parrot vuelve al frente y muestra la pantalla de análisis"
+      ]
+    },
+    {
+      "id": "UJ-02",
+      "name": "Responder preguntas opcionales y generar",
+      "steps": [
+        "Parrot muestra las 3 preguntas con badge 'opcional'",
+        "El botón 'Generar Skill' está habilitado desde el primer momento",
+        "El usuario responde solo las preguntas que le son relevantes",
+        "Puede agregar contexto libre en el campo 'Contexto adicional'",
+        "Presiona 'Generar Skill' en cualquier momento sin necesidad de responder todo"
+      ]
+    }
+  ],
+
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "given": "El usuario presiona 'Iniciar grabación'",
+      "when": "La grabación comienza",
+      "then": "Aparece una mini ventana flotante always-on-top en la esquina inferior derecha con el timer y los botones"
+    },
+    {
+      "id": "AC-02",
+      "given": "La mini ventana está visible",
+      "when": "El usuario presiona 'Detener y Analizar' en ella",
+      "then": "La grabación se detiene, la mini ventana se cierra, Parrot pasa al frente y comienza el análisis"
+    },
+    {
+      "id": "AC-03",
+      "given": "La mini ventana está visible",
+      "when": "El usuario presiona '✕ Cancelar' en ella",
+      "then": "La grabación se cancela, la mini ventana se cierra, Parrot vuelve a la pantalla Home"
+    },
+    {
+      "id": "AC-04",
+      "given": "La grabación termina por cualquier motivo",
+      "when": "La pantalla de Parrot cambia a Analyzing o Home",
+      "then": "La mini ventana se cierra automáticamente"
+    },
+    {
+      "id": "AC-05",
+      "given": "Claude retornó el análisis",
+      "when": "Se muestra la pantalla de Analysis Result",
+      "then": "Las 3 preguntas tienen badge 'opcional', el botón 'Generar Skill' está habilitado, y hay un campo 'Contexto adicional' al pie"
+    },
+    {
+      "id": "AC-06",
+      "given": "El usuario no respondió ninguna pregunta",
+      "when": "Presiona 'Generar Skill'",
+      "then": "El flujo continúa normalmente enviando respuestas vacías + contexto adicional (si lo escribió)"
+    }
+  ],
+
+  "ux_behavior": {
+    "overlay": {
+      "size": "220 × 72 px",
+      "position": "esquina inferior derecha de la pantalla",
+      "style": "dark, borde violet, siempre encima de todas las ventanas, sin frame del SO",
+      "content": "dot REC pulsante | timer | botón 'Analizar' (violet) | botón '✕' (sutil)"
+    },
+    "questions": {
+      "badge": "cada pregunta tiene un tag 'opcional' en gris",
+      "btn_generate": "habilitado desde que se muestra la pantalla, sin condición",
+      "additional_context": "textarea al pie con placeholder 'Agregá contexto extra para ayudar a la IA (opcional)...'"
+    }
+  }
+}

@@ -2,14 +2,15 @@ import * as dotenv from 'dotenv';
 import * as path from 'path';
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
-import { app, BrowserWindow, ipcMain, desktopCapturer, dialog } from 'electron';
+import { app, BrowserWindow, ipcMain, desktopCapturer, dialog, screen } from 'electron';
 import * as fs from 'fs/promises';
 import * as os from 'os';
 import { analyzeWorkflow } from './ai/agent1-analyzer';
 import { generateSkill } from './ai/agent2-generator';
 import type { AnalyzeWorkflowPayload, GenerateSkillPayload } from './ai/types';
 
-let mainWindow: BrowserWindow | null = null;
+let mainWindow:    BrowserWindow | null = null;
+let overlayWindow: BrowserWindow | null = null;
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
@@ -24,7 +25,6 @@ function createWindow(): void {
 
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
 
-  // Open DevTools in dev mode to see renderer errors
   if (!app.isPackaged) {
     mainWindow.webContents.openDevTools({ mode: 'bottom' });
   }
@@ -37,14 +37,12 @@ app.whenReady().then(() => {
   });
 });
 
-// En Mac la app no se cierra al cerrar todas las ventanas
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
 
 // ─── Existing IPC ──────────────────────────────────────────────────────────────
 
-// IPC: obtener fuentes de pantalla — funciona en Mac, Windows y Linux (X11)
 ipcMain.handle('get-sources', async () => {
   const sources = await desktopCapturer.getSources({
     types: ['screen'],
@@ -55,6 +53,51 @@ ipcMain.handle('get-sources', async () => {
     name: s.name,
     thumbnail: s.thumbnail.toDataURL(),
   }));
+});
+
+// ─── Overlay IPC ───────────────────────────────────────────────────────────────
+
+ipcMain.handle('open-overlay', () => {
+  if (overlayWindow && !overlayWindow.isDestroyed()) return;
+
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+
+  overlayWindow = new BrowserWindow({
+    width: 220,
+    height: 72,
+    x: width - 236,
+    y: height - 88,
+    frame: false,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    resizable: false,
+    focusable: true,
+    webPreferences: {
+      preload: path.join(__dirname, 'overlay-preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  overlayWindow.loadFile(path.join(__dirname, 'renderer', 'overlay.html'));
+  overlayWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+
+  overlayWindow.on('closed', () => { overlayWindow = null; });
+});
+
+ipcMain.handle('close-overlay', () => {
+  if (overlayWindow && !overlayWindow.isDestroyed()) {
+    overlayWindow.close();
+    overlayWindow = null;
+  }
+});
+
+// Overlay sends action → forward to main window
+ipcMain.on('overlay-action', (_event, action: 'stop-analyze' | 'cancel') => {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  mainWindow.show();
+  mainWindow.focus();
+  mainWindow.webContents.send('overlay-action', action);
 });
 
 // ─── Phase 2 IPC ───────────────────────────────────────────────────────────────

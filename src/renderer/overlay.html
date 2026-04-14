@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Parrot REC</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
+      background: #111318;
+      color: #f1f5f9;
+      width: 220px;
+      height: 72px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      gap: 8px;
+      border: 1px solid rgba(139, 92, 246, 0.4);
+      border-radius: 4px;
+      -webkit-app-region: drag;
+      user-select: none;
+    }
+
+    /* Left: REC indicator */
+    .rec-section {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+      -webkit-app-region: no-drag;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      background: #ef4444;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #ef4444;
+      animation: blink 1.2s ease-in-out infinite;
+    }
+
+    .rec-label {
+      font-size: 0.55rem;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #ef4444;
+    }
+
+    /* Timer */
+    .timer {
+      font-size: 1.05rem;
+      font-weight: 300;
+      letter-spacing: 0.06em;
+      color: #f1f5f9;
+      font-variant-numeric: tabular-nums;
+      flex: 1;
+      text-align: center;
+    }
+
+    .timer span { color: #475569; }
+
+    /* Buttons */
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-shrink: 0;
+      -webkit-app-region: no-drag;
+    }
+
+    .btn-stop {
+      padding: 4px 10px;
+      background: rgba(139, 92, 246, 0.15);
+      border: 1px solid rgba(139, 92, 246, 0.5);
+      border-radius: 2px;
+      color: #8b5cf6;
+      font-family: inherit;
+      font-size: 0.55rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .btn-stop:hover {
+      background: rgba(139, 92, 246, 0.28);
+      box-shadow: 0 0 10px rgba(139, 92, 246, 0.3);
+    }
+
+    .btn-cancel {
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+      color: #475569;
+      font-size: 0.7rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-cancel:hover {
+      border-color: rgba(239, 68, 68, 0.4);
+      color: #ef4444;
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.2; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="rec-section">
+    <div class="dot"></div>
+    <span class="rec-label">REC</span>
+  </div>
+
+  <div class="timer" id="timer">00<span>:</span>00</div>
+
+  <div class="actions">
+    <button class="btn-stop" id="btn-stop">Analizar</button>
+    <button class="btn-cancel" id="btn-cancel" title="Cancelar">✕</button>
+  </div>
+
+  <script>
+    let seconds = 0;
+
+    function pad(n) { return String(n).padStart(2, '0'); }
+
+    function tick() {
+      seconds++;
+      const m = Math.floor(seconds / 60);
+      const s = seconds % 60;
+      document.getElementById('timer').innerHTML =
+        pad(m) + '<span>:</span>' + pad(s);
+    }
+
+    setInterval(tick, 1000);
+
+    document.getElementById('btn-stop').addEventListener('click', () => {
+      window.overlayAPI.sendAction('stop-analyze');
+    });
+
+    document.getElementById('btn-cancel').addEventListener('click', () => {
+      window.overlayAPI.sendAction('cancel');
+    });
+  </script>
+</body>
+</html>

@@ -48,6 +48,9 @@ interface Window {
   parrotAPI: {
     getSources: () => Promise<{ id: string; name: string; thumbnail: string }[]>;
     saveRecording: (buffer: ArrayBuffer) => Promise<void>;
+    openOverlay: () => Promise<void>;
+    closeOverlay: () => Promise<void>;
+    onOverlayAction: (cb: (action: 'stop-analyze' | 'cancel') => void) => void;
     getApiKeyStatus: () => Promise<boolean>;
     analyzeWorkflow: (payload: AnalyzeWorkflowPayload) => Promise<WorkflowAnalysis>;
     generateSkill: (payload: GenerateSkillPayload) => Promise<SkillOutput>;
@@ -272,6 +275,7 @@ function resetSession(): void {
 function stopRecording(): void {
   isRecording = false;
   stopCaptureInterval();
+  (window as any).parrotAPI.closeOverlay();
   if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
   if (activeStream) { activeStream.getTracks().forEach(t => t.stop()); activeStream = null; }
   preview.srcObject = null;
@@ -346,7 +350,11 @@ function populateAnalysisResult(analysis: WorkflowAnalysis): void {
 
   questEl.innerHTML = analysis.clarifying_questions.map(q => `
     <div class="question-card" data-qid="${q.id}">
-      <p class="question-text">${q.id}. ${q.question}</p>
+      <div class="question-header">
+        <span class="question-num">${q.id}.</span>
+        <p class="question-text">${q.question}</p>
+        <span class="badge-optional">opcional</span>
+      </div>
       <p class="question-ctx">${q.context}</p>
       <div class="question-answers">
         <button class="btn-answer" data-answer="yes">Sí</button>
@@ -356,7 +364,7 @@ function populateAnalysisResult(analysis: WorkflowAnalysis): void {
     </div>
   `).join('');
 
-  // Wire up Sí/No buttons
+  // Wire up Sí/No buttons (no validation required — all optional)
   questEl.querySelectorAll('.question-card').forEach(card => {
     const btns     = card.querySelectorAll<HTMLButtonElement>('.btn-answer');
     const textarea = card.querySelector<HTMLTextAreaElement>('.answer-textarea')!;
@@ -366,51 +374,41 @@ function populateAnalysisResult(analysis: WorkflowAnalysis): void {
         btns.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         textarea.value = '';
-        checkAllAnswered();
       });
     });
 
     textarea.addEventListener('input', () => {
-      if (textarea.value.trim()) {
-        btns.forEach(b => b.classList.remove('active'));
-      }
-      checkAllAnswered();
+      if (textarea.value.trim()) btns.forEach(b => b.classList.remove('active'));
     });
   });
 
-  checkAllAnswered();
-}
-
-function checkAllAnswered(): void {
+  // Always enabled — questions are optional
   const btnGenerate = document.getElementById('btn-generate-skill') as HTMLButtonElement;
-  const cards = document.querySelectorAll('.question-card');
-  let allAnswered = true;
-
-  cards.forEach(card => {
-    const activeBtn = card.querySelector('.btn-answer.active');
-    const textarea  = card.querySelector<HTMLTextAreaElement>('.answer-textarea')!;
-    if (!activeBtn && !textarea.value.trim()) allAnswered = false;
-  });
-
-  btnGenerate.disabled = !allAnswered;
+  btnGenerate.disabled = false;
 }
 
 function collectAnswers(): UserAnswer[] {
   const answers: UserAnswer[] = [];
+
   document.querySelectorAll('.question-card').forEach(card => {
-    const qid      = parseInt((card as HTMLElement).dataset.qid ?? '0', 10);
+    const qid       = parseInt((card as HTMLElement).dataset.qid ?? '0', 10);
     const activeBtn = card.querySelector<HTMLButtonElement>('.btn-answer.active');
     const textarea  = card.querySelector<HTMLTextAreaElement>('.answer-textarea')!;
 
     let answer = '';
-    if (textarea.value.trim()) {
-      answer = textarea.value.trim();
-    } else if (activeBtn) {
-      answer = activeBtn.dataset.answer ?? '';
-    }
+    if (textarea.value.trim())       answer = textarea.value.trim();
+    else if (activeBtn)              answer = activeBtn.dataset.answer ?? '';
+    // empty string = user left it unanswered (optional)
 
     answers.push({ question_id: qid, answer });
   });
+
+  // Include additional context if provided (question_id = 0)
+  const additionalCtx = (document.getElementById('additional-context') as HTMLTextAreaElement)?.value?.trim();
+  if (additionalCtx) {
+    answers.push({ question_id: 0, answer: additionalCtx });
+  }
+
   return answers;
 }
 
@@ -546,6 +544,7 @@ btnRecord.addEventListener('click', async () => {
     mediaRecorder.start(1000);
     isRecording = true;
     startCaptureInterval();
+    (window as any).parrotAPI.openOverlay();
 
   } catch (err) {
     console.warn('[parrot] captura real falló, usando simulación:', err);
@@ -554,6 +553,7 @@ btnRecord.addEventListener('click', async () => {
     startSimulation();
     isRecording = true;
     startCaptureInterval();
+    (window as any).parrotAPI.openOverlay();
   }
 });
 
@@ -612,6 +612,18 @@ document.addEventListener('click', (e) => {
 });
 
 // Frame capture runs via setInterval (startCaptureInterval) — no click listener needed
+
+// ─── Overlay action handler ────────────────────────────────────────────────────
+(window as any).parrotAPI.onOverlayAction((action: 'stop-analyze' | 'cancel') => {
+  if (action === 'stop-analyze') {
+    stopRecording();
+    runAnalysis();
+  } else if (action === 'cancel') {
+    stopRecording();
+    resetSession();
+    showScreen('screen-home');
+  }
+});
 
 // ─── Init ──────────────────────────────────────────────────────────────────────
 showScreen('screen-home');

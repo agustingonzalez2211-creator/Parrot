@@ -274,8 +274,24 @@
       background: var(--bg-1); border: 1px solid var(--border); border-radius: 2px;
       padding: 16px; display: flex; flex-direction: column; gap: 10px;
     }
-    .question-text { font-size: 0.72rem; color: var(--text); line-height: 1.6; }
+    .question-header { display: flex; align-items: flex-start; gap: 8px; }
+    .question-num { color: var(--violet); font-size: 0.68rem; flex-shrink: 0; margin-top: 2px; }
+    .question-text { font-size: 0.72rem; color: var(--text); line-height: 1.6; flex: 1; }
     .question-ctx  { font-size: 0.6rem; color: var(--text-dim); line-height: 1.5; }
+    .badge-optional {
+      font-size: 0.5rem; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--text-dim); border: 1px solid rgba(71,85,105,0.4);
+      padding: 2px 6px; border-radius: 2px; flex-shrink: 0; margin-top: 2px;
+    }
+    .additional-context-section { margin-top: 4px; }
+    .additional-context-section .section-label { margin-bottom: 8px; }
+    .additional-context-textarea {
+      width: 100%; background: var(--bg-1); border: 1px solid var(--border);
+      border-radius: 2px; color: var(--text); font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem; padding: 10px 12px; resize: vertical; min-height: 72px;
+    }
+    .additional-context-textarea:focus { outline: none; border-color: var(--border-bright); }
+    .additional-context-textarea::placeholder { color: var(--text-dim); }
     .question-answers { display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap; }
     .btn-answer {
       padding: 6px 18px; background: transparent;
@@ -538,14 +554,25 @@
 
         <!-- 3 questions -->
         <div>
-          <div class="section-label">3 preguntas para clarificar el flujo</div>
+          <div class="section-label">3 preguntas para clarificar el flujo <span style="color:var(--text-dim);font-size:0.55rem;">(todas opcionales)</span></div>
           <div style="display:flex;flex-direction:column;gap:12px;" id="wr-questions"></div>
+        </div>
+
+        <!-- Additional context -->
+        <div class="additional-context-section">
+          <div class="section-label">Contexto adicional</div>
+          <textarea
+            id="additional-context"
+            class="additional-context-textarea"
+            placeholder="Agregá cualquier contexto extra que ayude a la IA a entender mejor tu workflow (opcional)…"
+            maxlength="1000"
+          ></textarea>
         </div>
 
       </div>
 
       <div class="analysis-footer">
-        <button class="btn-generate" id="btn-generate-skill" disabled>Generar Skill →</button>
+        <button class="btn-generate" id="btn-generate-skill">Generar Skill →</button>
       </div>
 
     </div>

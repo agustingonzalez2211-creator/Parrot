@@ -54,11 +54,23 @@ Rules:
 }`;
 
 function buildUserMessage(analysis: WorkflowAnalysis, answers: UserAnswer[]): string {
+  const regularAnswers    = answers.filter(a => a.question_id !== 0);
+  const additionalContext = answers.find(a => a.question_id === 0);
+
+  const answersText = regularAnswers.map(a => {
+    const answer = a.answer.trim() ? a.answer : '(no answer provided)';
+    return `Q${a.question_id}: ${answer}`;
+  }).join('\n');
+
+  const additionalText = additionalContext?.answer
+    ? `\n\nAdditional context from user:\n${additionalContext.answer}`
+    : '';
+
   return `Workflow Analysis:
 ${JSON.stringify(analysis, null, 2)}
 
-User's answers to clarifying questions:
-${JSON.stringify(answers, null, 2)}
+User's answers to clarifying questions (unanswered questions are shown as "(no answer provided)"):
+${answersText}${additionalText}
 
 Generate the .md skill file for Claude Code and return the JSON output.`;
 }
