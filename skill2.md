@@ -34,20 +34,37 @@ Abrir Mercado Libre Argentina, buscar "PlayStation 5", extraer los primeros 3 re
 
 ## Pasos
 
-### 1. Abrir Mercado Libre con la busqueda
+### 1. Abrir Mercado Libre
 Ejecutar el comando segun el sistema operativo detectado:
 ```bash
-start "https://listado.mercadolibre.com.ar/playstation-5" || open "https://listado.mercadolibre.com.ar/playstation-5" || xdg-open "https://listado.mercadolibre.com.ar/playstation-5"
+start "https://www.mercadolibre.com.ar/" || open "https://www.mercadolibre.com.ar/" || xdg-open "https://www.mercadolibre.com.ar/"
 ```
 Esperar 4 segundos a que cargue la pagina.
 
 ### 2. Verificar que la pagina cargo
 Usar `mcp__windows-mcp__snapshot` para tomar una captura del estado actual del escritorio.
-Verificar que Mercado Libre se abrio con los resultados de busqueda de PlayStation 5.
+Verificar que Mercado Libre se abrio correctamente (se ve el logo y la barra de busqueda).
 
 Si aparece algun popup o banner de cookies, cerrarlo haciendo click en el boton de cerrar o aceptar.
 
-### 3. Leer los resultados
+### 3. Buscar PlayStation 5
+Hacer click en la barra de busqueda de Mercado Libre con `mcp__windows-mcp__click`. La barra esta centrada en la parte superior de la pagina, es un campo de texto con placeholder "Buscar productos, marcas y mas...".
+
+Usar `mcp__windows-mcp__type` para escribir:
+```
+PlayStation 5
+```
+
+Luego presionar Enter con `mcp__windows-mcp__click` en el boton de buscar (icono de lupa a la derecha de la barra) o usar shortcut Enter.
+
+Esperar 3 segundos a que carguen los resultados.
+
+### 4. Verificar resultados de busqueda
+Usar `mcp__windows-mcp__snapshot` para verificar que se muestran los resultados de busqueda.
+
+Si los resultados no son visibles, usar `mcp__windows-mcp__scroll` para bajar un poco en la pagina y volver a tomar snapshot.
+
+### 5. Leer los resultados
 Usar `mcp__windows-mcp__snapshot` con `use_dom=True` para inspeccionar los elementos de la pagina directamente desde el navegador abierto.
 Identificar los primeros 3 resultados de busqueda, extrayendo:
 - **Nombre** del producto
@@ -56,7 +73,7 @@ Identificar los primeros 3 resultados de busqueda, extrayendo:
 
 Si los resultados no son visibles, usar `mcp__windows-mcp__scroll` para bajar un poco en la pagina y volver a tomar snapshot.
 
-### 4. Reportar al usuario
+### 6. Reportar al usuario
 Mostrar un resumen con los 3 primeros resultados en formato:
 
 1. **Nombre del producto** - $Precio (Envio gratis / Envio con cargo)
