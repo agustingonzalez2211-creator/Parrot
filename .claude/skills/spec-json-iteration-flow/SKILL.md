@@ -4,7 +4,6 @@ description: "Create features using a gated spec-first workflow: (1) read app co
 version: 1.0.0
 allowed-tools: [Read, Write, Edit, Glob, Grep, Bash]
 ---
-
 # Spec JSON Iteration Flow
 
 ## Overview

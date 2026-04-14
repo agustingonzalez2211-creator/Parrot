@@ -63,14 +63,26 @@ ${JSON.stringify(answers, null, 2)}
 Generate the .md skill file for Claude Code and return the JSON output.`;
 }
 
+function extractJson(text: string): string {
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (fenced) return fenced[1].trim();
+  const start = text.indexOf('{');
+  const end   = text.lastIndexOf('}');
+  if (start !== -1 && end !== -1 && end > start) return text.slice(start, end + 1);
+  return text.trim();
+}
+
 function parseSkillOutput(text: string): SkillOutput | null {
   try {
-    const parsed = JSON.parse(text);
+    const parsed = JSON.parse(extractJson(text));
     if (parsed && typeof parsed.skill_content === 'string') {
       return parsed as SkillOutput;
     }
+    console.warn('[parrot:agent2] parse ok but missing skill_content');
     return null;
-  } catch {
+  } catch (e) {
+    console.warn('[parrot:agent2] parse failed:', (e as Error).message);
+    console.warn('[parrot:agent2] raw response (first 500 chars):', text.slice(0, 500));
     return null;
   }
 }

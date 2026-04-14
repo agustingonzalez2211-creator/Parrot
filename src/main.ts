@@ -23,6 +23,11 @@ function createWindow(): void {
   });
 
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
+
+  // Open DevTools in dev mode to see renderer errors
+  if (!app.isPackaged) {
+    mainWindow.webContents.openDevTools({ mode: 'bottom' });
+  }
 }
 
 app.whenReady().then(() => {

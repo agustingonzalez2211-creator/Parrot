@@ -82,6 +82,7 @@ let recordedChunks:   Blob[]               = [];
 let activeStream:     MediaStream | null   = null;
 let timerInterval:    ReturnType<typeof setInterval> | null = null;
 let simInterval:      ReturnType<typeof setInterval> | null = null;
+let captureInterval:  ReturnType<typeof setInterval> | null = null;
 let seconds    = 0;
 let frameCount = 0;
 let isRecording = false;
@@ -200,22 +201,19 @@ function stopSimulation() {
   preview.style.display = 'none';
 }
 
-// ─── Frame capture ─────────────────────────────────────────────────────────────
-function captureFrame(e: MouseEvent): void {
+// ─── Frame capture (interval-based) ───────────────────────────────────────────
+function captureFrameByInterval(): void {
   if (!isRecording) return;
 
-  // Determine source element and its dimensions
-  const videoEl   = preview.style.display !== 'none' ? preview : canvas;
-  const rect      = videoEl.getBoundingClientRect();
-  const click_x   = e.clientX - rect.left;
-  const click_y   = e.clientY - rect.top;
-  const click_x_pct = rect.width  > 0 ? click_x / rect.width  : 0;
-  const click_y_pct = rect.height > 0 ? click_y / rect.height : 0;
+  const videoEl = preview.style.display !== 'none' ? preview : canvas;
 
-  // Draw to offscreen canvas
+  // Skip if video stream not ready yet
+  if (videoEl instanceof HTMLVideoElement && videoEl.readyState < 2) return;
+
   const MAX_W = 1280, MAX_H = 720;
-  const srcW  = videoEl instanceof HTMLVideoElement ? videoEl.videoWidth  || rect.width  : rect.width;
-  const srcH  = videoEl instanceof HTMLVideoElement ? videoEl.videoHeight || rect.height : rect.height;
+  const rect  = videoEl.getBoundingClientRect();
+  const srcW  = videoEl instanceof HTMLVideoElement ? (videoEl.videoWidth  || rect.width)  : rect.width;
+  const srcH  = videoEl instanceof HTMLVideoElement ? (videoEl.videoHeight || rect.height) : rect.height;
 
   let outW = srcW, outH = srcH;
   if (outW > MAX_W) { outH = Math.round(outH * MAX_W / outW); outW = MAX_W; }
@@ -224,30 +222,27 @@ function captureFrame(e: MouseEvent): void {
   const offscreen = document.createElement('canvas');
   offscreen.width  = outW;
   offscreen.height = outH;
-  const ctx = offscreen.getContext('2d')!;
-
-  if (videoEl instanceof HTMLVideoElement) {
-    ctx.drawImage(videoEl, 0, 0, outW, outH);
-  } else {
-    ctx.drawImage(videoEl, 0, 0, outW, outH);
-  }
+  offscreen.getContext('2d')!.drawImage(videoEl, 0, 0, outW, outH);
 
   const image_base64 = offscreen.toDataURL('image/jpeg', 0.7).split(',')[1];
   const seq = capturedFrames.length + 1;
   const timestamp_ms = seconds * 1000;
 
-  const frame: CapturedFrame = {
-    seq, timestamp_ms, image_base64,
-    click_x, click_y, click_x_pct, click_y_pct,
-  };
+  capturedFrames.push({ seq, timestamp_ms, image_base64, click_x: 0, click_y: 0, click_x_pct: 0, click_y_pct: 0 });
 
-  capturedFrames.push(frame);
-
-  // Update UI counter
-  clickCounter.textContent = `${capturedFrames.length} click${capturedFrames.length !== 1 ? 's' : ''}`;
+  clickCounter.textContent = `${capturedFrames.length} frame${capturedFrames.length !== 1 ? 's' : ''}`;
   btnStopAnalyze.disabled = false;
 
-  console.log(`[parrot] frame captured seq=${seq} t=${timestamp_ms}ms x=${click_x.toFixed(0)} y=${click_y.toFixed(0)}`);
+  console.log(`[parrot] frame captured seq=${seq} t=${timestamp_ms}ms (interval)`);
+}
+
+function startCaptureInterval(): void {
+  stopCaptureInterval();
+  captureInterval = setInterval(captureFrameByInterval, 2000);
+}
+
+function stopCaptureInterval(): void {
+  if (captureInterval) { clearInterval(captureInterval); captureInterval = null; }
 }
 
 function sampleFrames(frames: CapturedFrame[], max: number): CapturedFrame[] {
@@ -262,19 +257,21 @@ function sampleFrames(frames: CapturedFrame[], max: number): CapturedFrame[] {
 
 // ─── Reset session ─────────────────────────────────────────────────────────────
 function resetSession(): void {
+  stopCaptureInterval();
   capturedFrames   = [];
   currentAnalysis  = null;
   currentSkill     = null;
   retryAction      = null;
   recordedChunks   = [];
   frameCount       = 0;
-  clickCounter.textContent = '0 clicks';
+  clickCounter.textContent = '0 frames';
   btnStopAnalyze.disabled  = true;
 }
 
 // ─── Stop recording helper ─────────────────────────────────────────────────────
 function stopRecording(): void {
   isRecording = false;
+  stopCaptureInterval();
   if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
   if (activeStream) { activeStream.getTracks().forEach(t => t.stop()); activeStream = null; }
   preview.srcObject = null;
@@ -318,7 +315,7 @@ async function runAnalysis(): Promise<void> {
     const analysis = await (window as any).parrotAPI.analyzeWorkflow({
       frames: sampled,
       recording_duration_ms: seconds * 1000,
-      total_clicks: capturedFrames.length,
+      total_frames: capturedFrames.length,
     });
     console.log('[parrot:agent1] received analysis:', analysis.workflow_name);
     currentAnalysis = analysis;
@@ -548,6 +545,7 @@ btnRecord.addEventListener('click', async () => {
     };
     mediaRecorder.start(1000);
     isRecording = true;
+    startCaptureInterval();
 
   } catch (err) {
     console.warn('[parrot] captura real falló, usando simulación:', err);
@@ -555,6 +553,7 @@ btnRecord.addEventListener('click', async () => {
     sbSize.textContent   = 'Modo simulado · VP9 · 30fps';
     startSimulation();
     isRecording = true;
+    startCaptureInterval();
   }
 });
 
@@ -612,16 +611,7 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// Click capture on preview/canvas during recording
-document.addEventListener('click', (e) => {
-  if (!isRecording) return;
-  const target = e.target as HTMLElement;
-  // only capture clicks on the viewfinder area
-  if (target === preview || target === canvas ||
-      target.closest('.viewfinder-wrap')) {
-    captureFrame(e as MouseEvent);
-  }
-});
+// Frame capture runs via setInterval (startCaptureInterval) — no click listener needed
 
 // ─── Init ──────────────────────────────────────────────────────────────────────
 showScreen('screen-home');
