@@ -1,0 +1,109 @@
+{
+  "feature_id": "interval-capture",
+  "feature_name": "Captura automática por intervalos desde el stream de pantalla",
+  "version": "1.0.0",
+  "status": "draft",
+  "date": "2026-04-14",
+
+  "problem": {
+    "description": "La implementación actual captura frames solo cuando el usuario hace click DENTRO de la ventana de Electron (en el viewfinder). Pero el usuario está grabando su flujo de trabajo en OTRAS aplicaciones del sistema. Los clicks fuera de la ventana de Electron nunca disparan el event listener del renderer, por lo que Parrot no captura ningún frame del workflow real.",
+    "root_cause": "document.addEventListener('click') solo escucha eventos dentro de la ventana del renderer de Electron. No existe acceso a eventos del sistema operativo desde el renderer sin módulos nativos.",
+    "current_bad_ux": "El usuario tiene que clickear dentro de la ventana de Parrot (sobre el viewfinder) para que se registren frames — lo cual es exactamente lo contrario de lo que debería hacer."
+  },
+
+  "scope": {
+    "description": "Reemplazar la captura basada en clicks dentro del renderer por captura automática por intervalos de tiempo directamente desde el stream de video de desktopCapturer. El stream ya contiene la pantalla completa — solo hay que extraer frames a intervalos regulares.",
+    "in_scope": [
+      "Captura automática de frames cada 2 segundos mientras la grabación esté activa",
+      "Los frames se extraen del <video> element que ya tiene el stream del desktopCapturer",
+      "El contador del HUD muestra 'X frames' actualizándose cada 2 segundos",
+      "El botón 'Detener y Analizar' se habilita automáticamente después del primer frame capturado (a los 2 segundos de iniciar)",
+      "Eliminación del listener de click en el viewfinder como mecanismo de captura",
+      "Adaptar el prompt del Agente 1 para describir frames como 'capturas a intervalos' en lugar de 'clicks'"
+    ],
+    "out_of_scope": [
+      "Detección de clicks del sistema operativo mediante módulos nativos (uiohook-napi, robotjs)",
+      "Captura de metadata de posición del cursor",
+      "Cambiar el intervalo desde la UI (siempre fijo en 2 segundos)",
+      "Captura de audio o de eventos de teclado"
+    ]
+  },
+
+  "user_journeys": [
+    {
+      "id": "UJ-01",
+      "name": "Grabar workflow en otra app",
+      "steps": [
+        "Usuario abre Parrot y presiona 'Iniciar grabación'",
+        "Parrot minimiza o el usuario pone otra app al frente (ej: Chrome, VS Code)",
+        "El usuario realiza su flujo de trabajo normalmente en la otra app, sin tener que hacer nada en Parrot",
+        "Cada 2 segundos, Parrot captura automáticamente un frame del stream de pantalla",
+        "El contador del HUD de Parrot se actualiza en background: '1 frame', '2 frames', '3 frames'...",
+        "El usuario vuelve a Parrot y presiona 'Detener y Analizar'",
+        "El resto del flujo continúa igual (análisis con Claude, preguntas, skill)"
+      ]
+    }
+  ],
+
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "given": "La grabación está activa y el usuario está usando CUALQUIER aplicación del sistema",
+      "when": "Pasan 2 segundos desde el último frame capturado",
+      "then": "La app captura automáticamente un frame del stream de pantalla (mostrando lo que sea que esté en pantalla en ese momento) y el contador del HUD incrementa en 1"
+    },
+    {
+      "id": "AC-02",
+      "given": "La grabación acaba de iniciar",
+      "when": "Transcurren los primeros 2 segundos",
+      "then": "El primer frame se captura automáticamente y el botón 'Detener y Analizar' se habilita"
+    },
+    {
+      "id": "AC-03",
+      "given": "La grabación está activa durante 30 segundos",
+      "when": "El usuario presiona 'Detener y Analizar'",
+      "then": "Se habrán capturado aproximadamente 15 frames (30s / 2s), que se samplearán a máximo 15 frames para la API"
+    },
+    {
+      "id": "AC-04",
+      "given": "El usuario graba en modo simulación (sin permisos de pantalla)",
+      "when": "El intervalo dispara",
+      "then": "El frame se captura del <canvas> de simulación en lugar del <video>, y el flujo continúa normalmente"
+    },
+    {
+      "id": "AC-05",
+      "given": "El usuario presiona 'Cancelar' durante la grabación",
+      "when": "En cualquier momento",
+      "then": "El intervalo de captura se detiene inmediatamente y los frames acumulados se descartan"
+    }
+  ],
+
+  "ux_behavior": {
+    "hud_counter": "El contador muestra 'N frame(s)' en lugar de 'N click(s)'. Se actualiza cada 2 segundos automáticamente mientras el usuario hace su workflow en otra app.",
+    "btn_stop_analyze": "Se habilita automáticamente cuando se captura el primer frame (a los 2 segundos). No requiere ninguna acción del usuario dentro de Parrot.",
+    "user_action_required": "Ninguna acción dentro de Parrot durante la grabación. El usuario solo graba en sus otras apps y vuelve a Parrot cuando termina."
+  },
+
+  "business_rules": [
+    {
+      "id": "BR-01",
+      "rule": "El intervalo de captura es fijo en 2000ms (2 segundos). No configurable por el usuario."
+    },
+    {
+      "id": "BR-02",
+      "rule": "El mecanismo de captura por click en el viewfinder se elimina completamente. Los frames solo se capturan por intervalo."
+    },
+    {
+      "id": "BR-03",
+      "rule": "Si el <video> no tiene un stream activo (readyState < 2), el frame de ese intervalo se saltea sin error."
+    },
+    {
+      "id": "BR-04",
+      "rule": "El máximo de frames enviados a la API sigue siendo 15 (sampleados uniformemente si hay más)."
+    },
+    {
+      "id": "BR-05",
+      "rule": "Los campos click_x, click_y, click_x_pct, click_y_pct del CapturedFrame se setean en 0 para frames de intervalo, ya que no hay coordenadas de click."
+    }
+  ]
+}

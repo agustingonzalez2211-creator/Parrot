@@ -1,0 +1,63 @@
+{
+  "feature_id": "interval-capture",
+  "spec_type": "todos",
+  "version": "1.0.0",
+  "date": "2026-04-14",
+
+  "tasks": [
+    {
+      "id": "IC-01",
+      "title": "Actualizar src/ai/types.ts: renombrar total_clicks → total_frames",
+      "status": "pending",
+      "parallelizable": true,
+      "depends_on": [],
+      "outputs": ["src/ai/types.ts"],
+      "exit_criteria": "AnalyzeWorkflowPayload usa total_frames. Comentario en CapturedFrame indica que click_x/y son 0 en capturas por intervalo."
+    },
+    {
+      "id": "IC-02",
+      "title": "Actualizar src/ai/agent1-analyzer.ts: system prompt + user message template",
+      "status": "pending",
+      "parallelizable": true,
+      "depends_on": [],
+      "outputs": ["src/ai/agent1-analyzer.ts"],
+      "exit_criteria": "System prompt dice 'interval screenshots'. User message template dice 'Total frames captured (2s interval)'."
+    },
+    {
+      "id": "IC-03",
+      "title": "Reescribir captura en src/renderer/renderer.ts: intervalo en lugar de click",
+      "status": "pending",
+      "parallelizable": false,
+      "depends_on": ["IC-01"],
+      "outputs": ["src/renderer/renderer.ts"],
+      "exit_criteria": "captureFrameByInterval, startCaptureInterval, stopCaptureInterval implementadas. Listener de click del viewfinder eliminado. Intervalo arranca con la grabación y se detiene en stop/cancel/reset. Contador dice 'frames' no 'clicks'."
+    },
+    {
+      "id": "IC-04",
+      "title": "Build y verificación",
+      "status": "pending",
+      "parallelizable": false,
+      "depends_on": ["IC-02", "IC-03"],
+      "outputs": [],
+      "exit_criteria": "pnpm build sin errores TypeScript. El bundle del renderer no tiene referencias a click capture del viewfinder."
+    }
+  ],
+
+  "execution_batches": [
+    {
+      "batch": 1,
+      "description": "IC-01 e IC-02 en paralelo (archivos independientes)",
+      "tasks": ["IC-01", "IC-02"]
+    },
+    {
+      "batch": 2,
+      "description": "IC-03 secuencial (depende de IC-01)",
+      "tasks": ["IC-03"]
+    },
+    {
+      "batch": 3,
+      "description": "IC-04 build final",
+      "tasks": ["IC-04"]
+    }
+  ]
+}

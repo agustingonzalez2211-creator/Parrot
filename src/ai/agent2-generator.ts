@@ -3,7 +3,19 @@ import { WorkflowAnalysis, UserAnswer, SkillOutput } from "./types";
 
 const client = new Anthropic();
 
-const SYSTEM_PROMPT = `You are an AI Skill generator for Claude Code. You receive a workflow analysis (from screenshots of a user performing a task) and the user's answers to clarifying questions. Your job is to produce an executable SKILL.md file that Claude Code can load and replay using computer-use MCP tools.
+// Two-part response format: JSON metadata THEN raw .md content separated by ---SKILL_CONTENT---
+// This avoids embedding multi-line markdown (with backtick blocks) inside a JSON string,
+// which reliably causes JSON parse failures.
+const SYSTEM_PROMPT = `You are an AI Skill generator for Claude Code. You receive a workflow analysis and the user's answers to clarifying questions. Your job is to produce an executable SKILL.md file that Claude Code can load and replay using computer-use MCP tools.
+
+Respond in EXACTLY this two-part format, with no extra text before or after:
+
+PART 1 — one line of JSON metadata (no newlines inside the JSON):
+{"skill_name":"kebab-case-name","skill_filename":"SKILL.md","claude_code_instructions":["Create directory: mkdir -p ~/.claude/skills/<skill-name>","Save to: ~/.claude/skills/<skill-name>/SKILL.md","Run with: /<skill-name>","Claude Code will execute the skill step by step using available MCP tools"]}
+
+PART 2 — the raw SKILL.md content after the delimiter:
+---SKILL_CONTENT---
+(full SKILL.md content here)
 
 ## Critical: The skill must be EXECUTABLE, not just descriptive
 
@@ -22,158 +34,153 @@ Claude will read the skill and translate each step into MCP tool calls. The skil
 
 ## SKILL.md format (Claude Code standard)
 
-The output must be a valid Claude Code skill file. It MUST start with YAML frontmatter between --- markers, followed by markdown content. This is the official Claude Code skill format.
+The SKILL.md in PART 2 MUST start with YAML frontmatter between --- markers, followed by markdown content:
 
-\`\`\`
 ---
 name: kebab-case-skill-name
 description: "One-line description. Use when [trigger condition]."
 disable-model-invocation: true
-allowed-tools: [Bash, Read, Write, Edit, Glob, Grep]
+allowed-tools: Bash(start *) Bash(open *) Bash(xdg-open *) mcp__windows-mcp__screenshot mcp__windows-mcp__snapshot mcp__windows-mcp__scrape mcp__windows-mcp__app mcp__windows-mcp__type mcp__windows-mcp__click mcp__windows-mcp__scroll
 ---
 
-# Skill Title
+## Setup automatico
 
-> One-line description of what this skill does.
+Sistema operativo: !\`uname -s\`
+uv disponible: !\`uv --version 2>/dev/null || echo "no instalado"\`
+Windows-MCP disponible: !\`uvx windows-mcp --version 2>/dev/null || echo "no instalado"\`
 
-## Prerequisites
-- List of apps that must be installed/open
-- List of conditions that must be true before starting
-- Any credentials or data the user needs to provide
+Si Windows-MCP no esta instalado, seguir estos pasos antes de continuar:
+1. Instalar uv: pip install uv
+2. Agregar Windows-MCP: claude mcp add --transport stdio windows-mcp -- uvx windows-mcp
+3. Reiniciar Claude Code para que cargue el MCP.
+4. Verificar con /mcp que windows-mcp aparece como conectado.
 
-## Execution Instructions
+## Objetivo
 
-Execute this workflow step by step using the computer-use MCP tools available in this session.
-The skill works on **any platform** (Windows, macOS, Linux) — use whichever MCP tools are available.
+(Clear description of what the workflow does end-to-end)
 
-**Before starting:**
-1. Take a screenshot to see the current state of the screen.
-2. Verify prerequisites are met.
-3. If an app needs to be opened, open it first and wait for it to load.
+## Pasos
 
-**For each step:**
-1. Read the step description and visual_hint to understand what to look for.
-2. Take a screenshot if you need to locate the element.
-3. Perform the action described.
-4. Take a screenshot and verify the expected result matches the verify field.
-5. If verification fails, try the fallback strategy before moving to the next step.
-6. Only proceed to the next step after verification passes.
+### 1. Step title
+Description of what to do.
+Use specific MCP tool references: mcp__windows-mcp__snapshot, mcp__windows-mcp__click, mcp__windows-mcp__type, etc.
+Include verification after each action.
 
-**If a step fails after fallback:** Stop execution, report which step failed, include the screenshot, and ask the user how to proceed.
+### 2. Next step
+...
 
-## Inputs
+## Parametros
+List any inputs or say "Ninguno" for fixed skills.
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| input_name | string | Yes | What this input is |
+## Resultado esperado
+What the user gets when the skill completes successfully.
 
-## Workflow
-
-\\\`\\\`\\\`yaml
-steps:
-  - id: 1
-    action: open_app
-    target: "App Name"
-    description: "Open the application"
-    visual_hint: "How to find it (Start menu, Dock, taskbar icon)"
-    verify: "App window is visible and loaded"
-    fallback: "Try keyboard shortcut or search in system launcher"
-
-  - id: 2
-    action: type
-    target: "input field"
-    text: "{{input_name}}"
-    description: "Fill in the field with the provided value"
-    visual_hint: "Text input with placeholder '...', below the label '...'"
-    verify: "The typed text is visible in the field"
-    fallback: "Click on the field first to ensure focus, then type"
-\\\`\\\`\\\`
-
-## Expected Output
-
-Description of what the workflow produces when completed successfully.
-
-## Troubleshooting
-
-- **App not found**: Try searching in the system launcher or opening manually
-- **Element not visible**: Scroll down or check if a dialog is blocking the view
-\`\`\`
+## Notas
+Extra context, MCP tool reference, links.
 
 ## Rules for generating skills
 
-1. **YAML frontmatter is MANDATORY** — Must start with --- markers containing name, description, disable-model-invocation: true, and allowed-tools.
-2. **name in frontmatter** must be kebab-case, max 40 characters, descriptive. This becomes the /slash-command.
-3. **description in frontmatter** must say what the skill does AND when to use it (e.g. "Exports monthly report from dashboard. Use when you need to generate the monthly sales report.").
-4. **disable-model-invocation: true** is always set — these are user-triggered replay skills, not auto-triggered.
-5. **visual_hint is mandatory for every step** — Describe color, position relative to other elements, text label, icon shape. Never use pixel coordinates.
-6. **verify is mandatory for every step** — Describe what the screen should look like after the action succeeds.
-7. **fallback is mandatory for every step** — Alternative approach (keyboard shortcut, different path, retry).
-8. **Use {{input_name}} for variable data** — Dates, names, IDs, URLs that change between runs must be declared as inputs.
-9. **Steps must be atomic** — One action per step. "Open Chrome and navigate to URL" = two steps.
-10. **action verbs must be from this list:** open_app, click, double_click, right_click, type, key, select, navigate, scroll, wait, verify, drag
-11. **Include a verify-only step at the end** — Final screenshot + confirmation that the workflow completed.
-12. **Troubleshooting section** — 2-4 common issues with resolutions.
-13. **Platform-agnostic visual_hints** — Say "system launcher" not "Start menu", "text editor" not "Notepad", unless the workflow is app-specific.
-14. **The Execution Instructions section is critical** — Do not omit or simplify it.
+1. **YAML frontmatter is MANDATORY** — Must start with --- markers containing name, description, disable-model-invocation: true, and allowed-tools with MCP tool names.
+2. **Setup automatico section** — Always include the dynamic context injection block with uname, uv, and Windows-MCP version checks.
+3. **name in frontmatter** must be kebab-case, max 40 characters, descriptive. This becomes the /slash-command.
+4. **description in frontmatter** must say what the skill does AND when to use it.
+5. **disable-model-invocation: true** is always set — these are user-triggered replay skills, not auto-triggered.
+6. **Use specific MCP tool names** in steps — mcp__windows-mcp__snapshot, mcp__windows-mcp__click, mcp__windows-mcp__type, mcp__windows-mcp__scroll, mcp__windows-mcp__screenshot, mcp__windows-mcp__app.
+7. **Verify after each action** — Take a snapshot and verify the expected state before proceeding.
+8. **Steps must be atomic** — One action per step. "Open Chrome and navigate to URL" = two steps.
+9. **action verbs must be from this list:** open_app, click, double_click, right_click, type, key, select, navigate, scroll, wait, verify, drag
+10. **Include a verify step at the end** — Final screenshot + confirmation that the workflow completed.
+11. **Platform-agnostic where possible** — Use start || open || xdg-open pattern for opening URLs/apps.
+12. **Troubleshooting at end** — How to handle common failures.
 
-Return ONLY valid JSON matching the SkillOutput schema. No markdown wrapping, no explanation, just the JSON object.`;
+CRITICAL FORMAT RULES:
+- The JSON in PART 1 must be a single line with no newlines
+- The delimiter ---SKILL_CONTENT--- must be on its own line
+- Do NOT wrap the JSON in markdown code fences
+- Do NOT add any text outside the two parts`;
 
-const SKILL_OUTPUT_SCHEMA: Anthropic.Tool = {
-  name: "submit_skill",
-  description: "Submit the generated skill file for Claude Code",
-  input_schema: {
-    type: "object" as const,
-    properties: {
-      skill_name: {
-        type: "string",
-        description:
-          'Kebab-case skill name, max 40 chars (e.g. "exportar-reporte-mensual")',
-      },
-      skill_filename: {
-        type: "string",
-        description:
-          'Filename with .md extension (e.g. "exportar-reporte-mensual.md")',
-      },
-      skill_content: {
-        type: "string",
-        description:
-          "Complete .md file content: title, description, prerequisites, execution instructions, YAML workflow block, and troubleshooting section",
-      },
-      claude_code_instructions: {
-        type: "array",
-        items: { type: "string" },
-        description: "Steps to install and use the skill in Claude Code",
-      },
-    },
-    required: [
-      "skill_name",
-      "skill_filename",
-      "skill_content",
-      "claude_code_instructions",
-    ],
-  },
-};
+const DELIMITER = "---SKILL_CONTENT---";
 
 function buildUserMessage(
   analysis: WorkflowAnalysis,
   answers: UserAnswer[],
 ): string {
-  return `## Workflow Analysis (from screen recording)
+  const regularAnswers = answers.filter((a) => a.question_id !== 0);
+  const additionalContext = answers.find((a) => a.question_id === 0);
 
+  const answersText = regularAnswers
+    .map((a) => {
+      const answer = a.answer.trim() ? a.answer : "(no answer provided)";
+      return `Q${a.question_id}: ${answer}`;
+    })
+    .join("\n");
+
+  const additionalText = additionalContext?.answer
+    ? `\n\nAdditional context from user:\n${additionalContext.answer}`
+    : "";
+
+  return `Workflow Analysis:
 ${JSON.stringify(analysis, null, 2)}
 
-## User's Answers to Clarifying Questions
+User's answers to clarifying questions (unanswered = no answer provided):
+${answersText || "(all questions left unanswered)"}${additionalText}
 
-${JSON.stringify(answers, null, 2)}
+Generate the executable skill following the two-part format described in your instructions.
+Remember: YAML frontmatter is mandatory, include Setup automatico section, use specific MCP tool names in steps, verify after each action.`;
+}
 
-Generate the executable .md skill file for Claude Code. Remember:
-- Every step needs visual_hint, verify, and fallback
-- Variable data must be extracted as inputs with {{name}} syntax
-- The skill must be executable by Claude using computer-use MCP tools
-- Include the full Execution Instructions section
-- Include a Troubleshooting section
+function parseResponse(text: string): SkillOutput | null {
+  const delimIdx = text.indexOf(DELIMITER);
+  if (delimIdx === -1) {
+    console.warn("[parrot:agent2] delimiter not found in response");
+    console.warn(
+      "[parrot:agent2] raw response (first 600 chars):",
+      text.slice(0, 600),
+    );
+    return null;
+  }
 
-Call the submit_skill tool with the complete skill.`;
+  const metaPart = text.slice(0, delimIdx).trim();
+  const contentPart = text.slice(delimIdx + DELIMITER.length).trim();
+
+  // metaPart may be wrapped in a code fence — strip it
+  const jsonLine = metaPart
+    .replace(/^```(?:json)?\s*/m, "")
+    .replace(/\s*```\s*$/, "")
+    .trim();
+
+  let meta: {
+    skill_name: string;
+    skill_filename: string;
+    claude_code_instructions: string[];
+  };
+  try {
+    meta = JSON.parse(jsonLine);
+  } catch (e) {
+    console.warn(
+      "[parrot:agent2] metadata JSON parse failed:",
+      (e as Error).message,
+    );
+    console.warn("[parrot:agent2] meta part:", metaPart.slice(0, 300));
+    return null;
+  }
+
+  if (!meta.skill_name || !contentPart) {
+    console.warn("[parrot:agent2] missing skill_name or content");
+    return null;
+  }
+
+  return {
+    skill_name: meta.skill_name,
+    skill_filename: "SKILL.md",
+    skill_content: contentPart,
+    claude_code_instructions: meta.claude_code_instructions ?? [
+      `Create directory: mkdir -p ~/.claude/skills/${meta.skill_name}`,
+      `Save to: ~/.claude/skills/${meta.skill_name}/SKILL.md`,
+      `Run with: /${meta.skill_name}`,
+      "Claude Code will execute the skill step by step using available MCP tools",
+    ],
+  };
 }
 
 export async function generateSkill(
@@ -184,56 +191,58 @@ export async function generateSkill(
 
   const userMessage = buildUserMessage(analysis, answers);
 
-  const response = await client.messages.create({
+  const firstResponse = await client.messages.create({
     model: "claude-opus-4-6",
     max_tokens: 8192,
     system: SYSTEM_PROMPT,
-    tools: [SKILL_OUTPUT_SCHEMA],
-    tool_choice: { type: "tool" as const, name: "submit_skill" },
     messages: [{ role: "user", content: userMessage }],
   });
 
-  // With tool_choice forced, the response will always contain a tool_use block
-  const toolBlock = response.content.find(
-    (block): block is Anthropic.ToolUseBlock => block.type === "tool_use",
-  );
+  const firstText = firstResponse.content
+    .filter((b) => b.type === "text")
+    .map((b) => (b as { type: "text"; text: string }).text)
+    .join("");
 
-  if (!toolBlock) {
-    throw new Error(
-      "[parrot:agent2] No tool_use block in response — unexpected",
-    );
+  const firstResult = parseResponse(firstText);
+  if (firstResult) {
+    console.log(`[parrot:agent2] received skill: ${firstResult.skill_name}`);
+    return firstResult;
   }
 
-  const input = toolBlock.input as {
-    skill_name: string;
-    skill_filename: string;
-    skill_content: string;
-    claude_code_instructions: string[];
-  };
-
-  // Validate the essential fields
-  if (!input.skill_content || input.skill_content.length < 100) {
-    throw new Error("[parrot:agent2] skill_content is empty or too short");
-  }
-
-  if (!input.skill_name || !input.skill_filename) {
-    throw new Error("[parrot:agent2] skill_name or skill_filename missing");
-  }
-
-  const result: SkillOutput = {
-    skill_name: input.skill_name,
-    skill_filename: "SKILL.md",
-    skill_content: input.skill_content,
-    claude_code_instructions: input.claude_code_instructions || [
-      `Create directory: mkdir -p ~/.claude/skills/${input.skill_name}`,
-      `Save to: ~/.claude/skills/${input.skill_name}/SKILL.md`,
-      `Run with: /${input.skill_name}`,
-      "Claude Code will execute the skill step by step using available MCP tools",
+  // Retry with explicit reminder
+  const retryResponse = await client.messages.create({
+    model: "claude-opus-4-6",
+    max_tokens: 8192,
+    system: SYSTEM_PROMPT,
+    messages: [
+      { role: "user", content: userMessage },
+      { role: "assistant", content: firstText },
+      {
+        role: "user",
+        content:
+          `Your response was not in the correct format. Remember:\n` +
+          `1. First line: single-line JSON with skill_name, skill_filename, claude_code_instructions\n` +
+          `2. Then the exact delimiter on its own line: ${DELIMITER}\n` +
+          `3. Then the raw SKILL.md content (starting with --- YAML frontmatter ---)\n` +
+          `No extra text. Try again.`,
+      },
     ],
-  };
+  });
 
-  console.log(
-    `[parrot:agent2] generated skill: ${result.skill_name} (${result.skill_content.length} chars)`,
+  const retryText = retryResponse.content
+    .filter((b) => b.type === "text")
+    .map((b) => (b as { type: "text"; text: string }).text)
+    .join("");
+
+  const retryResult = parseResponse(retryText);
+  if (retryResult) {
+    console.log(
+      `[parrot:agent2] received skill (retry): ${retryResult.skill_name}`,
+    );
+    return retryResult;
+  }
+
+  throw new Error(
+    "[parrot:agent2] Failed to generate valid skill output after retry",
   );
-  return result;
 }

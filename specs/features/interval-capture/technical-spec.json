@@ -1,0 +1,97 @@
+{
+  "feature_id": "interval-capture",
+  "spec_type": "technical",
+  "version": "1.0.0",
+  "date": "2026-04-14",
+
+  "changes_summary": "Reemplazar captura por click (dentro del renderer) por setInterval de 2000ms que extrae frames del <video>/<canvas> del stream de desktopCapturer.",
+
+  "modified_files": [
+    {
+      "path": "src/renderer/renderer.ts",
+      "changes": [
+        "Agregar variable: captureInterval: ReturnType<typeof setInterval> | null = null",
+        "Agregar función startCaptureInterval(): inicia setInterval(captureFrameByInterval, 2000)",
+        "Agregar función stopCaptureInterval(): clearInterval + captureInterval = null",
+        "Agregar función captureFrameByInterval(): extrae frame del <video> o <canvas> sin MouseEvent. Si video.readyState < 2, saltear silenciosamente.",
+        "Eliminar el document.addEventListener('click', ...) que llama a captureFrame en el viewfinder",
+        "Modificar startRecording (btnRecord click handler): llamar startCaptureInterval() después de que el stream esté listo",
+        "Modificar stopRecording(): llamar stopCaptureInterval()",
+        "Modificar resetSession(): llamar stopCaptureInterval() + resetear contador",
+        "Actualizar texto del contador: 'N frame(s)' en lugar de 'N click(s)'",
+        "Actualizar AnalyzeWorkflowPayload enviado: total_clicks → total_frames"
+      ]
+    },
+    {
+      "path": "src/ai/agent1-analyzer.ts",
+      "changes": [
+        "Actualizar system prompt: reemplazar 'screenshots captured at click events' por 'screenshots captured at 2-second intervals'",
+        "Actualizar user_message_template: 'Total clicks captured' → 'Total frames captured (2s interval)'"
+      ]
+    },
+    {
+      "path": "src/ai/types.ts",
+      "changes": [
+        "Renombrar campo total_clicks → total_frames en AnalyzeWorkflowPayload",
+        "Aclarar en comentario de CapturedFrame que click_x/click_y son 0 para capturas por intervalo"
+      ]
+    }
+  ],
+
+  "new_functions": {
+    "captureFrameByInterval": {
+      "location": "src/renderer/renderer.ts",
+      "signature": "function captureFrameByInterval(): void",
+      "logic": [
+        "if (!isRecording) return",
+        "const videoEl = preview.style.display !== 'none' ? preview : canvas",
+        "if (videoEl instanceof HTMLVideoElement && videoEl.readyState < 2) return  // no stream yet",
+        "Extraer frame igual que el captureFrame anterior pero con click_x=0, click_y=0, click_x_pct=0, click_y_pct=0",
+        "Push a capturedFrames[]",
+        "Actualizar clickCounter.textContent",
+        "Habilitar btnStopAnalyze si es el primer frame"
+      ]
+    },
+    "startCaptureInterval": {
+      "location": "src/renderer/renderer.ts",
+      "signature": "function startCaptureInterval(): void",
+      "logic": [
+        "stopCaptureInterval()  // limpia cualquier intervalo previo",
+        "captureInterval = setInterval(captureFrameByInterval, 2000)"
+      ]
+    },
+    "stopCaptureInterval": {
+      "location": "src/renderer/renderer.ts",
+      "signature": "function stopCaptureInterval(): void",
+      "logic": [
+        "if (captureInterval) { clearInterval(captureInterval); captureInterval = null; }"
+      ]
+    }
+  },
+
+  "removed": [
+    "Listener: document.addEventListener('click', ...) para captura en viewfinder (líneas ~615-623 en renderer.ts)",
+    "Función captureFrame(e: MouseEvent) — reemplazada por captureFrameByInterval()"
+  ],
+
+  "timing": {
+    "interval_ms": 2000,
+    "first_frame_at": "~2000ms después de iniciar la grabación",
+    "btn_enable_at": "Cuando capturedFrames.length >= 1 (primer frame capturado)"
+  },
+
+  "failure_modes": [
+    {
+      "scenario": "Video no tiene stream listo cuando dispara el intervalo",
+      "handling": "Verificar videoEl.readyState >= 2 antes de capturar. Si no, saltear ese tick silenciosamente."
+    },
+    {
+      "scenario": "Canvas de simulación no tiene contenido todavía",
+      "handling": "El canvas siempre tiene contenido si startSimulation() fue llamado antes. No requiere verificación extra."
+    },
+    {
+      "scenario": "stopRecording() no limpia el intervalo",
+      "handling": "stopCaptureInterval() se llama tanto en stopRecording() como en resetSession() para garantizar limpieza."
+    }
+  ]
+}

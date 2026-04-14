@@ -3,15 +3,15 @@
 // Single source of truth for all data contracts between renderer, main and AI.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** One screenshot captured at the moment of a click during recording */
+/** One screenshot captured at a 2-second interval during recording */
 export interface CapturedFrame {
   seq: number; // sequence number (1, 2, 3…)
   timestamp_ms: number; // ms since recording started
   image_base64: string; // JPEG base64, max 1280×720, quality 0.7
-  click_x: number; // click X in pixels on the video/canvas element
-  click_y: number; // click Y in pixels
-  click_x_pct: number; // X as fraction of viewport width (0–1)
-  click_y_pct: number; // Y as fraction of viewport height (0–1)
+  click_x: number; // always 0 for interval captures
+  click_y: number; // always 0 for interval captures
+  click_x_pct: number; // always 0 for interval captures
+  click_y_pct: number; // always 0 for interval captures
 }
 
 /** A single semantic step detected in the workflow */
@@ -46,7 +46,7 @@ export interface WorkflowAnalysis {
 
 /** User's answer to one clarifying question */
 export interface UserAnswer {
-  question_id: number; // 1, 2 or 3
+  question_id: number; // 1, 2 or 3 (0 = additional context)
   answer: string; // 'yes' | 'no' | free text (max 500 chars)
 }
 
@@ -63,7 +63,7 @@ export interface SkillOutput {
 export interface AnalyzeWorkflowPayload {
   frames: CapturedFrame[]; // already sampled to max 15
   recording_duration_ms: number;
-  total_clicks: number;
+  total_frames: number; // total frames captured at 2s intervals
 }
 
 export interface GenerateSkillPayload {

@@ -1,0 +1,72 @@
+{
+  "feature_id": "overlay-and-optional-questions",
+  "spec_type": "todos",
+  "version": "1.0.0",
+  "date": "2026-04-14",
+
+  "tasks": [
+    {
+      "id": "OQ-01",
+      "title": "Crear src/overlay-preload.ts",
+      "status": "pending", "parallelizable": true, "depends_on": [],
+      "outputs": ["src/overlay-preload.ts"],
+      "exit_criteria": "Expone overlayAPI.sendAction(action) via contextBridge"
+    },
+    {
+      "id": "OQ-02",
+      "title": "Crear src/renderer/overlay.html (UI del overlay)",
+      "status": "pending", "parallelizable": true, "depends_on": [],
+      "outputs": ["src/renderer/overlay.html"],
+      "exit_criteria": "Frameless, dark, dot pulsante, timer propio, botón Analizar y Cancelar"
+    },
+    {
+      "id": "OQ-03",
+      "title": "Actualizar src/main.ts: overlay window + IPC handlers",
+      "status": "pending", "parallelizable": false, "depends_on": ["OQ-01"],
+      "outputs": ["src/main.ts"],
+      "exit_criteria": "open-overlay crea window posicionada, close-overlay la cierra, overlay-action forwarda al main window"
+    },
+    {
+      "id": "OQ-04",
+      "title": "Actualizar src/preload.ts: openOverlay, closeOverlay, onOverlayAction",
+      "status": "pending", "parallelizable": false, "depends_on": ["OQ-03"],
+      "outputs": ["src/preload.ts"],
+      "exit_criteria": "Los 3 métodos expuestos en parrotAPI"
+    },
+    {
+      "id": "OQ-05",
+      "title": "Actualizar src/renderer/renderer.ts: ciclo de vida overlay + preguntas opcionales",
+      "status": "pending", "parallelizable": false, "depends_on": ["OQ-04"],
+      "outputs": ["src/renderer/renderer.ts"],
+      "exit_criteria": "openOverlay en record start, closeOverlay en stop, onOverlayAction handler, checkAllAnswered eliminado, btn-generate siempre habilitado, additional-context incluido en collectAnswers"
+    },
+    {
+      "id": "OQ-06",
+      "title": "Actualizar src/renderer/index.html: badge opcional + campo contexto adicional",
+      "status": "pending", "parallelizable": false, "depends_on": ["OQ-02"],
+      "outputs": ["src/renderer/index.html"],
+      "exit_criteria": "btn-generate-skill sin disabled, estilos badge opcional, sección additional-context"
+    },
+    {
+      "id": "OQ-07",
+      "title": "Actualizar build script en package.json: copiar overlay.html",
+      "status": "pending", "parallelizable": true, "depends_on": [],
+      "outputs": ["package.json"],
+      "exit_criteria": "Build copia overlay.html a dist/renderer/"
+    },
+    {
+      "id": "OQ-08",
+      "title": "Build y verificación TypeScript",
+      "status": "pending", "parallelizable": false, "depends_on": ["OQ-05", "OQ-06", "OQ-07"],
+      "outputs": [],
+      "exit_criteria": "pnpm build sin errores"
+    }
+  ],
+
+  "execution_batches": [
+    { "batch": 1, "parallel": ["OQ-01", "OQ-02", "OQ-07"] },
+    { "batch": 2, "sequential": ["OQ-03", "OQ-04", "OQ-05"] },
+    { "batch": 3, "parallel": ["OQ-06"] },
+    { "batch": 4, "sequential": ["OQ-08"] }
+  ]
+}

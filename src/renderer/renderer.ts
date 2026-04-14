@@ -48,6 +48,9 @@ interface Window {
   parrotAPI: {
     getSources: () => Promise<{ id: string; name: string; thumbnail: string }[]>;
     saveRecording: (buffer: ArrayBuffer) => Promise<void>;
+    openOverlay: () => Promise<void>;
+    closeOverlay: () => Promise<void>;
+    onOverlayAction: (cb: (action: 'stop-analyze' | 'cancel') => void) => void;
     getApiKeyStatus: () => Promise<boolean>;
     analyzeWorkflow: (payload: AnalyzeWorkflowPayload) => Promise<WorkflowAnalysis>;
     generateSkill: (payload: GenerateSkillPayload) => Promise<SkillOutput>;
@@ -82,6 +85,7 @@ let recordedChunks:   Blob[]               = [];
 let activeStream:     MediaStream | null   = null;
 let timerInterval:    ReturnType<typeof setInterval> | null = null;
 let simInterval:      ReturnType<typeof setInterval> | null = null;
+let captureInterval:  ReturnType<typeof setInterval> | null = null;
 let seconds    = 0;
 let frameCount = 0;
 let isRecording = false;
@@ -200,22 +204,19 @@ function stopSimulation() {
   preview.style.display = 'none';
 }
 
-// ─── Frame capture ─────────────────────────────────────────────────────────────
-function captureFrame(e: MouseEvent): void {
+// ─── Frame capture (interval-based) ───────────────────────────────────────────
+function captureFrameByInterval(): void {
   if (!isRecording) return;
 
-  // Determine source element and its dimensions
-  const videoEl   = preview.style.display !== 'none' ? preview : canvas;
-  const rect      = videoEl.getBoundingClientRect();
-  const click_x   = e.clientX - rect.left;
-  const click_y   = e.clientY - rect.top;
-  const click_x_pct = rect.width  > 0 ? click_x / rect.width  : 0;
-  const click_y_pct = rect.height > 0 ? click_y / rect.height : 0;
+  const videoEl = preview.style.display !== 'none' ? preview : canvas;
 
-  // Draw to offscreen canvas
+  // Skip if video stream not ready yet
+  if (videoEl instanceof HTMLVideoElement && videoEl.readyState < 2) return;
+
   const MAX_W = 1280, MAX_H = 720;
-  const srcW  = videoEl instanceof HTMLVideoElement ? videoEl.videoWidth  || rect.width  : rect.width;
-  const srcH  = videoEl instanceof HTMLVideoElement ? videoEl.videoHeight || rect.height : rect.height;
+  const rect  = videoEl.getBoundingClientRect();
+  const srcW  = videoEl instanceof HTMLVideoElement ? (videoEl.videoWidth  || rect.width)  : rect.width;
+  const srcH  = videoEl instanceof HTMLVideoElement ? (videoEl.videoHeight || rect.height) : rect.height;
 
   let outW = srcW, outH = srcH;
   if (outW > MAX_W) { outH = Math.round(outH * MAX_W / outW); outW = MAX_W; }
@@ -224,30 +225,27 @@ function captureFrame(e: MouseEvent): void {
   const offscreen = document.createElement('canvas');
   offscreen.width  = outW;
   offscreen.height = outH;
-  const ctx = offscreen.getContext('2d')!;
-
-  if (videoEl instanceof HTMLVideoElement) {
-    ctx.drawImage(videoEl, 0, 0, outW, outH);
-  } else {
-    ctx.drawImage(videoEl, 0, 0, outW, outH);
-  }
+  offscreen.getContext('2d')!.drawImage(videoEl, 0, 0, outW, outH);
 
   const image_base64 = offscreen.toDataURL('image/jpeg', 0.7).split(',')[1];
   const seq = capturedFrames.length + 1;
   const timestamp_ms = seconds * 1000;
 
-  const frame: CapturedFrame = {
-    seq, timestamp_ms, image_base64,
-    click_x, click_y, click_x_pct, click_y_pct,
-  };
+  capturedFrames.push({ seq, timestamp_ms, image_base64, click_x: 0, click_y: 0, click_x_pct: 0, click_y_pct: 0 });
 
-  capturedFrames.push(frame);
-
-  // Update UI counter
-  clickCounter.textContent = `${capturedFrames.length} click${capturedFrames.length !== 1 ? 's' : ''}`;
+  clickCounter.textContent = `${capturedFrames.length} frame${capturedFrames.length !== 1 ? 's' : ''}`;
   btnStopAnalyze.disabled = false;
 
-  console.log(`[parrot] frame captured seq=${seq} t=${timestamp_ms}ms x=${click_x.toFixed(0)} y=${click_y.toFixed(0)}`);
+  console.log(`[parrot] frame captured seq=${seq} t=${timestamp_ms}ms (interval)`);
+}
+
+function startCaptureInterval(): void {
+  stopCaptureInterval();
+  captureInterval = setInterval(captureFrameByInterval, 2000);
+}
+
+function stopCaptureInterval(): void {
+  if (captureInterval) { clearInterval(captureInterval); captureInterval = null; }
 }
 
 function sampleFrames(frames: CapturedFrame[], max: number): CapturedFrame[] {
@@ -262,19 +260,22 @@ function sampleFrames(frames: CapturedFrame[], max: number): CapturedFrame[] {
 
 // ─── Reset session ─────────────────────────────────────────────────────────────
 function resetSession(): void {
+  stopCaptureInterval();
   capturedFrames   = [];
   currentAnalysis  = null;
   currentSkill     = null;
   retryAction      = null;
   recordedChunks   = [];
   frameCount       = 0;
-  clickCounter.textContent = '0 clicks';
+  clickCounter.textContent = '0 frames';
   btnStopAnalyze.disabled  = true;
 }
 
 // ─── Stop recording helper ─────────────────────────────────────────────────────
 function stopRecording(): void {
   isRecording = false;
+  stopCaptureInterval();
+  (window as any).parrotAPI.closeOverlay();
   if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
   if (activeStream) { activeStream.getTracks().forEach(t => t.stop()); activeStream = null; }
   preview.srcObject = null;
@@ -318,7 +319,7 @@ async function runAnalysis(): Promise<void> {
     const analysis = await (window as any).parrotAPI.analyzeWorkflow({
       frames: sampled,
       recording_duration_ms: seconds * 1000,
-      total_clicks: capturedFrames.length,
+      total_frames: capturedFrames.length,
     });
     console.log('[parrot:agent1] received analysis:', analysis.workflow_name);
     currentAnalysis = analysis;
@@ -349,7 +350,11 @@ function populateAnalysisResult(analysis: WorkflowAnalysis): void {
 
   questEl.innerHTML = analysis.clarifying_questions.map(q => `
     <div class="question-card" data-qid="${q.id}">
-      <p class="question-text">${q.id}. ${q.question}</p>
+      <div class="question-header">
+        <span class="question-num">${q.id}.</span>
+        <p class="question-text">${q.question}</p>
+        <span class="badge-optional">opcional</span>
+      </div>
       <p class="question-ctx">${q.context}</p>
       <div class="question-answers">
         <button class="btn-answer" data-answer="yes">Sí</button>
@@ -359,7 +364,7 @@ function populateAnalysisResult(analysis: WorkflowAnalysis): void {
     </div>
   `).join('');
 
-  // Wire up Sí/No buttons
+  // Wire up Sí/No buttons (no validation required — all optional)
   questEl.querySelectorAll('.question-card').forEach(card => {
     const btns     = card.querySelectorAll<HTMLButtonElement>('.btn-answer');
     const textarea = card.querySelector<HTMLTextAreaElement>('.answer-textarea')!;
@@ -369,51 +374,41 @@ function populateAnalysisResult(analysis: WorkflowAnalysis): void {
         btns.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         textarea.value = '';
-        checkAllAnswered();
       });
     });
 
     textarea.addEventListener('input', () => {
-      if (textarea.value.trim()) {
-        btns.forEach(b => b.classList.remove('active'));
-      }
-      checkAllAnswered();
+      if (textarea.value.trim()) btns.forEach(b => b.classList.remove('active'));
     });
   });
 
-  checkAllAnswered();
-}
-
-function checkAllAnswered(): void {
+  // Always enabled — questions are optional
   const btnGenerate = document.getElementById('btn-generate-skill') as HTMLButtonElement;
-  const cards = document.querySelectorAll('.question-card');
-  let allAnswered = true;
-
-  cards.forEach(card => {
-    const activeBtn = card.querySelector('.btn-answer.active');
-    const textarea  = card.querySelector<HTMLTextAreaElement>('.answer-textarea')!;
-    if (!activeBtn && !textarea.value.trim()) allAnswered = false;
-  });
-
-  btnGenerate.disabled = !allAnswered;
+  btnGenerate.disabled = false;
 }
 
 function collectAnswers(): UserAnswer[] {
   const answers: UserAnswer[] = [];
+
   document.querySelectorAll('.question-card').forEach(card => {
-    const qid      = parseInt((card as HTMLElement).dataset.qid ?? '0', 10);
+    const qid       = parseInt((card as HTMLElement).dataset.qid ?? '0', 10);
     const activeBtn = card.querySelector<HTMLButtonElement>('.btn-answer.active');
     const textarea  = card.querySelector<HTMLTextAreaElement>('.answer-textarea')!;
 
     let answer = '';
-    if (textarea.value.trim()) {
-      answer = textarea.value.trim();
-    } else if (activeBtn) {
-      answer = activeBtn.dataset.answer ?? '';
-    }
+    if (textarea.value.trim())       answer = textarea.value.trim();
+    else if (activeBtn)              answer = activeBtn.dataset.answer ?? '';
+    // empty string = user left it unanswered (optional)
 
     answers.push({ question_id: qid, answer });
   });
+
+  // Include additional context if provided (question_id = 0)
+  const additionalCtx = (document.getElementById('additional-context') as HTMLTextAreaElement)?.value?.trim();
+  if (additionalCtx) {
+    answers.push({ question_id: 0, answer: additionalCtx });
+  }
+
   return answers;
 }
 
@@ -548,6 +543,8 @@ btnRecord.addEventListener('click', async () => {
     };
     mediaRecorder.start(1000);
     isRecording = true;
+    startCaptureInterval();
+    (window as any).parrotAPI.openOverlay();
 
   } catch (err) {
     console.warn('[parrot] captura real falló, usando simulación:', err);
@@ -555,6 +552,8 @@ btnRecord.addEventListener('click', async () => {
     sbSize.textContent   = 'Modo simulado · VP9 · 30fps';
     startSimulation();
     isRecording = true;
+    startCaptureInterval();
+    (window as any).parrotAPI.openOverlay();
   }
 });
 
@@ -612,14 +611,17 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// Click capture on preview/canvas during recording
-document.addEventListener('click', (e) => {
-  if (!isRecording) return;
-  const target = e.target as HTMLElement;
-  // only capture clicks on the viewfinder area
-  if (target === preview || target === canvas ||
-      target.closest('.viewfinder-wrap')) {
-    captureFrame(e as MouseEvent);
+// Frame capture runs via setInterval (startCaptureInterval) — no click listener needed
+
+// ─── Overlay action handler ────────────────────────────────────────────────────
+(window as any).parrotAPI.onOverlayAction((action: 'stop-analyze' | 'cancel') => {
+  if (action === 'stop-analyze') {
+    stopRecording();
+    runAnalysis();
+  } else if (action === 'cancel') {
+    stopRecording();
+    resetSession();
+    showScreen('screen-home');
   }
 });
 

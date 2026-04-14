@@ -1,0 +1,115 @@
+{
+  "feature_id": "overlay-and-optional-questions",
+  "spec_type": "technical",
+  "version": "1.0.0",
+  "date": "2026-04-14",
+
+  "f1_overlay": {
+    "architecture": "Segunda BrowserWindow de Electron: frameless, alwaysOnTop, sin taskbar. HTML propio con JS inline. Preload propio mínimo.",
+    "new_files": [
+      {
+        "path": "src/renderer/overlay.html",
+        "description": "UI de la overlay: CSS inline + JS inline. Sin TypeScript (no necesita bundling). Timer propio que arranca al abrir la ventana."
+      },
+      {
+        "path": "src/overlay-preload.ts",
+        "description": "Preload mínimo para la overlay. Expone overlayAPI.sendAction(action: 'stop-analyze' | 'cancel')."
+      }
+    ],
+    "modified_files": [
+      {
+        "path": "src/main.ts",
+        "changes": [
+          "Variable overlayWindow: BrowserWindow | null",
+          "ipcMain.handle('open-overlay'): crea BrowserWindow(frameless, alwaysOnTop, 220×72, sin taskbar, preload=overlay-preload.js), carga overlay.html, posiciona en esquina inferior derecha via screen.getPrimaryDisplay()",
+          "ipcMain.handle('close-overlay'): cierra overlayWindow si existe",
+          "ipcMain.on('overlay-action', (_, action)): recibe acción de la overlay, la forwarda al mainWindow via mainWindow.webContents.send('overlay-action', action)",
+          "Agregar 'overlay-preload.js' al output del build"
+        ]
+      },
+      {
+        "path": "src/preload.ts",
+        "changes": [
+          "openOverlay(): ipcRenderer.invoke('open-overlay')",
+          "closeOverlay(): ipcRenderer.invoke('close-overlay')",
+          "onOverlayAction(cb): ipcRenderer.on('overlay-action', (_, action) => cb(action))"
+        ]
+      },
+      {
+        "path": "src/renderer/renderer.ts",
+        "changes": [
+          "En btnRecord click: llamar parrotAPI.openOverlay() después de isRecording = true",
+          "En stopRecording(): llamar parrotAPI.closeOverlay()",
+          "Al inicio: parrotAPI.onOverlayAction(action => { if action==='stop-analyze' → stopRecording() + runAnalysis(); if action==='cancel' → stopRecording() + resetSession() + showScreen('screen-home') })"
+        ]
+      }
+    ],
+    "overlay_window_config": {
+      "width": 220,
+      "height": 72,
+      "frame": false,
+      "alwaysOnTop": true,
+      "skipTaskbar": true,
+      "transparent": false,
+      "resizable": false,
+      "focusable": false,
+      "webPreferences": {
+        "preload": "overlay-preload.js",
+        "contextIsolation": true,
+        "nodeIntegration": false
+      }
+    },
+    "overlay_timer": "El overlay corre su propio setInterval(1s) desde que se carga. No requiere sincronización con el main window.",
+    "position_calculation": "const { width, height } = screen.getPrimaryDisplay().workAreaSize; overlayWindow.setPosition(width - 236, height - 88)"
+  },
+
+  "f2_optional_questions": {
+    "modified_files": [
+      {
+        "path": "src/renderer/renderer.ts",
+        "changes": [
+          "Eliminar función checkAllAnswered() completamente",
+          "En populateAnalysisResult: NO llamar checkAllAnswered() al final, NO agregar listener de checkAllAnswered en textareas/botones",
+          "btn-generate-skill arranca sin disabled (quitar el setAttribute disabled del HTML y no setearlo en código)",
+          "Agregar campo 'contexto adicional' al HTML de preguntas (textarea con id='additional-context')",
+          "En collectAnswers(): incluir additional_context como cuarto UserAnswer con question_id=0 si tiene contenido"
+        ]
+      },
+      {
+        "path": "src/renderer/index.html",
+        "changes": [
+          "Quitar 'disabled' del botón #btn-generate-skill en el HTML",
+          "Agregar estilos para badge 'opcional'"
+        ]
+      },
+      {
+        "path": "src/ai/agent2-generator.ts",
+        "changes": [
+          "El system prompt ya maneja respuestas vacías — no requiere cambios",
+          "El user_message_template mostrará el campo additional_context si viene con question_id=0"
+        ]
+      }
+    ],
+    "data_contract_change": "UserAnswer con question_id=0 y answer=texto → se inyecta en el prompt de agent2 como 'Additional context from user: <texto>'"
+  },
+
+  "build_changes": {
+    "overlay_preload": "tsc ya compila src/overlay-preload.ts → dist/overlay-preload.js (está en src/**/*)",
+    "overlay_html": "Agregar al build script: cp src/renderer/overlay.html dist/renderer/overlay.html"
+  },
+
+  "failure_modes": [
+    {
+      "scenario": "overlayWindow ya existe cuando se llama open-overlay de nuevo",
+      "handling": "close y recrear, o simplemente retornar si ya está abierta"
+    },
+    {
+      "scenario": "main window no existe cuando overlay-action llega",
+      "handling": "guard: if (!mainWindow) return"
+    },
+    {
+      "scenario": "overlay se cierra manualmente (usuario la cierra con el SO)",
+      "handling": "overlayWindow.on('closed', () => overlayWindow = null)"
+    }
+  ]
+}

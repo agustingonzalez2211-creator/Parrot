@@ -9,6 +9,17 @@ contextBridge.exposeInMainWorld('parrotAPI', {
   saveRecording: (buffer: ArrayBuffer): Promise<void> =>
     ipcRenderer.invoke('save-recording', buffer),
 
+  // ── Overlay ──────────────────────────────────────────────────────────────────
+  openOverlay: (): Promise<void> =>
+    ipcRenderer.invoke('open-overlay'),
+
+  closeOverlay: (): Promise<void> =>
+    ipcRenderer.invoke('close-overlay'),
+
+  onOverlayAction: (cb: (action: 'stop-analyze' | 'cancel') => void): void => {
+    ipcRenderer.on('overlay-action', (_event, action) => cb(action));
+  },
+
   // ── Phase 2: workflow analysis ───────────────────────────────────────────────
   getApiKeyStatus: (): Promise<boolean> =>
     ipcRenderer.invoke('get-api-key-status'),
