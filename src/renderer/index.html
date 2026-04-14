@@ -28,6 +28,25 @@
       --text-dim: #475569;
     }
 
+    [data-theme="light"] {
+      --bg-0: #f0f2f5;
+      --bg-1: #ffffff;
+      --bg-2: #e8eaef;
+      --border: rgba(139, 92, 246, 0.18);
+      --border-bright: rgba(139, 92, 246, 0.45);
+      --violet: #7c3aed;
+      --violet-dim: rgba(124, 58, 237, 0.1);
+      --violet-glow: rgba(124, 58, 237, 0.2);
+      --red: #dc2626;
+      --red-dim: rgba(220, 38, 38, 0.1);
+      --red-glow: rgba(220, 38, 38, 0.2);
+      --green: #16a34a;
+      --green-dim: rgba(22, 163, 74, 0.1);
+      --text: #1e293b;
+      --text-mid: #475569;
+      --text-dim: #94a3b8;
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
@@ -52,7 +71,7 @@
     }
     .titlebar-brand {
       font-family: 'Rajdhani', sans-serif;
-      font-size: 1.1rem;
+      font-size: 1.25rem;
       font-weight: 700;
       letter-spacing: 0.2em;
       text-transform: uppercase;
@@ -61,11 +80,23 @@
     }
     .titlebar-brand span { color: var(--violet); }
     .titlebar-tag {
-      font-size: 0.58rem;
+      font-size: 0.68rem;
       letter-spacing: 0.18em;
       text-transform: uppercase;
       color: var(--text-dim);
     }
+    .titlebar-right {
+      display: flex; align-items: center; gap: 10px;
+      -webkit-app-region: no-drag;
+    }
+    .btn-theme {
+      width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--bg-2); border: 1px solid var(--border-bright); border-radius: 4px;
+      color: var(--text-mid); font-size: 1rem; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-theme:hover { color: var(--violet); background: var(--violet-dim); }
 
     /* ── SCREENS ──────────────────────────────── */
     #screen-home,
@@ -120,19 +151,19 @@
     }
     .home-title span { color: var(--violet); }
     .home-version {
-      font-size: 0.58rem; letter-spacing: 0.2em; text-transform: uppercase;
+      font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase;
       color: var(--violet); border: 1px solid var(--border-bright);
       display: inline-block; padding: 3px 10px; border-radius: 2px;
       background: var(--violet-dim); margin-bottom: 24px;
     }
-    .home-desc { font-size: 0.72rem; color: var(--text-mid); line-height: 1.9; letter-spacing: 0.02em; font-weight: 300; }
+    .home-desc { font-size: 0.88rem; color: var(--text-mid); line-height: 1.9; letter-spacing: 0.02em; font-weight: 300; }
     .btn-start {
       position: relative; z-index: 1;
       display: flex; align-items: center; gap: 12px;
       padding: 15px 36px;
       background: transparent; border: 1px solid rgba(239,68,68,0.4); border-radius: 2px;
       color: var(--red);
-      font-family: 'Rajdhani', sans-serif; font-size: 1rem; font-weight: 600;
+      font-family: 'Rajdhani', sans-serif; font-size: 1.1rem; font-weight: 600;
       letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer;
       transition: all 0.2s ease;
     }
@@ -145,9 +176,9 @@
     .step {
       display: flex; align-items: center; gap: 8px; padding: 8px 14px;
       background: var(--bg-1); border: 1px solid var(--border); border-radius: 2px;
-      font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim);
+      font-size: 0.75rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim);
     }
-    .step-num { font-size: 0.58rem; color: var(--violet); }
+    .step-num { font-size: 0.7rem; color: var(--violet); }
 
     /* ── RECORDING SCREEN ─────────────────────── */
     .recording-layout { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
@@ -162,25 +193,25 @@
       background: var(--red-dim); border: 1px solid rgba(239,68,68,0.35); border-radius: 2px; padding: 5px 12px;
     }
     .rec-dot { width: 7px; height: 7px; background: var(--red); border-radius: 50%; box-shadow: 0 0 8px var(--red); animation: blink 1.2s ease-in-out infinite; }
-    .rec-label { font-size: 0.58rem; font-weight: 500; letter-spacing: 0.22em; text-transform: uppercase; color: var(--red); }
+    .rec-label { font-size: 0.7rem; font-weight: 500; letter-spacing: 0.22em; text-transform: uppercase; color: var(--red); }
     .rec-timer { font-size: 1.5rem; font-weight: 300; letter-spacing: 0.08em; color: var(--text); font-variant-numeric: tabular-nums; }
     .rec-timer span { color: var(--text-dim); }
     .click-counter-badge {
-      font-size: 0.58rem; letter-spacing: 0.1em; text-transform: uppercase;
+      font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase;
       color: var(--violet); background: var(--violet-dim);
       border: 1px solid var(--border-bright); border-radius: 2px; padding: 4px 10px;
     }
     .btn-cancel {
       display: flex; align-items: center; gap: 8px; padding: 7px 18px;
       background: transparent; border: 1px solid var(--border-bright); border-radius: 2px;
-      color: var(--text-mid); font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+      color: var(--text-mid); font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;
       letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; transition: all 0.2s ease;
     }
     .btn-cancel:hover { border-color: rgba(239,68,68,0.5); color: var(--red); background: var(--red-dim); }
     .btn-stop-analyze {
       display: flex; align-items: center; gap: 8px; padding: 7px 18px;
       background: var(--violet-dim); border: 1px solid var(--border-bright); border-radius: 2px;
-      color: var(--violet); font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+      color: var(--violet); font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;
       letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; transition: all 0.2s ease;
     }
     .btn-stop-analyze:hover:not(:disabled) { background: rgba(139,92,246,0.25); box-shadow: 0 0 16px var(--violet-glow); }
@@ -208,7 +239,7 @@
     .corner-tr { top: -1px; right: -1px;   border-width: 2px 2px 0 0; }
     .corner-bl { bottom: -1px; left: -1px;   border-width: 0 0 2px 2px; }
     .corner-br { bottom: -1px; right: -1px;  border-width: 0 2px 2px 0; }
-    .vf-label-tl, .vf-label-tr, .vf-label-bl, .vf-label-br { position: absolute; font-size: 0.52rem; letter-spacing: 0.14em; text-transform: uppercase; z-index: 12; }
+    .vf-label-tl, .vf-label-tr, .vf-label-bl, .vf-label-br { position: absolute; font-size: 0.65rem; letter-spacing: 0.14em; text-transform: uppercase; z-index: 12; }
     .vf-label-tl { top: 8px; left: 8px; color: var(--violet); }
     .vf-label-tr { top: 8px; right: 8px; color: var(--text-dim); text-align: right; }
     .vf-label-bl { bottom: 8px; left: 8px; color: var(--text-dim); }
@@ -217,7 +248,7 @@
       display: flex; align-items: center; justify-content: space-between;
       padding: 7px 20px; background: var(--bg-1); border-top: 1px solid var(--border); flex-shrink: 0;
     }
-    .statusbar-item { display: flex; align-items: center; gap: 6px; font-size: 0.58rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); }
+    .statusbar-item { display: flex; align-items: center; gap: 6px; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); }
     .statusbar-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); box-shadow: 0 0 5px var(--green); }
 
     /* ── SCR-03: ANALYZING ────────────────────── */
@@ -237,7 +268,7 @@
       font-family: 'Rajdhani', sans-serif; font-size: 1.4rem; font-weight: 600;
       letter-spacing: 0.1em; text-transform: uppercase; color: var(--text);
     }
-    .loading-sub { font-size: 0.62rem; color: var(--text-dim); letter-spacing: 0.1em; }
+    .loading-sub { font-size: 0.78rem; color: var(--text-dim); letter-spacing: 0.1em; }
 
     /* ── SCR-04: ANALYSIS RESULT ──────────────── */
     .analysis-layout {
@@ -255,17 +286,17 @@
       flex: 1; overflow-y: auto; padding: 24px 28px; display: flex; flex-direction: column; gap: 28px;
     }
     .section-label {
-      font-size: 0.58rem; letter-spacing: 0.2em; text-transform: uppercase;
+      font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase;
       color: var(--text-dim); margin-bottom: 10px;
     }
     .workflow-name {
-      font-family: 'Rajdhani', sans-serif; font-size: 1.3rem; font-weight: 700;
+      font-family: 'Rajdhani', sans-serif; font-size: 1.4rem; font-weight: 700;
       color: var(--text); margin-bottom: 6px;
     }
-    .workflow-desc { font-size: 0.7rem; color: var(--text-mid); line-height: 1.7; }
+    .workflow-desc { font-size: 0.85rem; color: var(--text-mid); line-height: 1.7; }
     .steps-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
     .steps-list li {
-      font-size: 0.66rem; color: var(--text-mid); padding: 6px 10px;
+      font-size: 0.8rem; color: var(--text-mid); padding: 6px 10px;
       background: var(--bg-1); border-left: 2px solid var(--border-bright); border-radius: 0 2px 2px 0;
     }
     .step-action { color: var(--violet); font-weight: 500; }
@@ -275,11 +306,11 @@
       padding: 16px; display: flex; flex-direction: column; gap: 10px;
     }
     .question-header { display: flex; align-items: flex-start; gap: 8px; }
-    .question-num { color: var(--violet); font-size: 0.68rem; flex-shrink: 0; margin-top: 2px; }
-    .question-text { font-size: 0.72rem; color: var(--text); line-height: 1.6; flex: 1; }
-    .question-ctx  { font-size: 0.6rem; color: var(--text-dim); line-height: 1.5; }
+    .question-num { color: var(--violet); font-size: 0.8rem; flex-shrink: 0; margin-top: 2px; }
+    .question-text { font-size: 0.88rem; color: var(--text); line-height: 1.6; flex: 1; }
+    .question-ctx  { font-size: 0.75rem; color: var(--text-dim); line-height: 1.5; }
     .badge-optional {
-      font-size: 0.5rem; letter-spacing: 0.14em; text-transform: uppercase;
+      font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase;
       color: var(--text-dim); border: 1px solid rgba(71,85,105,0.4);
       padding: 2px 6px; border-radius: 2px; flex-shrink: 0; margin-top: 2px;
     }
@@ -288,7 +319,7 @@
     .additional-context-textarea {
       width: 100%; background: var(--bg-1); border: 1px solid var(--border);
       border-radius: 2px; color: var(--text); font-family: 'JetBrains Mono', monospace;
-      font-size: 0.65rem; padding: 10px 12px; resize: vertical; min-height: 72px;
+      font-size: 0.8rem; padding: 10px 12px; resize: vertical; min-height: 72px;
     }
     .additional-context-textarea:focus { outline: none; border-color: var(--border-bright); }
     .additional-context-textarea::placeholder { color: var(--text-dim); }
@@ -296,7 +327,7 @@
     .btn-answer {
       padding: 6px 18px; background: transparent;
       border: 1px solid var(--border-bright); border-radius: 2px;
-      color: var(--text-mid); font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+      color: var(--text-mid); font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;
       letter-spacing: 0.1em; cursor: pointer; transition: all 0.15s ease;
     }
     .btn-answer:hover { border-color: var(--violet); color: var(--violet); }
@@ -304,7 +335,7 @@
     .answer-textarea {
       flex: 1; min-width: 200px; background: var(--bg-2);
       border: 1px solid var(--border); border-radius: 2px; color: var(--text);
-      font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+      font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;
       padding: 6px 10px; resize: vertical; min-height: 38px;
     }
     .answer-textarea:focus { outline: none; border-color: var(--border-bright); }
@@ -317,7 +348,7 @@
     .btn-generate {
       padding: 10px 28px; background: var(--violet-dim);
       border: 1px solid var(--border-bright); border-radius: 2px;
-      color: var(--violet); font-family: 'Rajdhani', sans-serif; font-size: 1rem; font-weight: 600;
+      color: var(--violet); font-family: 'Rajdhani', sans-serif; font-size: 1.1rem; font-weight: 600;
       letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; transition: all 0.2s ease;
     }
     .btn-generate:hover:not(:disabled) { background: rgba(139,92,246,0.25); box-shadow: 0 0 20px var(--violet-glow); }
@@ -336,12 +367,12 @@
       letter-spacing: 0.08em; color: var(--text);
     }
     .skill-badge {
-      font-size: 0.52rem; letter-spacing: 0.16em; text-transform: uppercase;
+      font-size: 0.65rem; letter-spacing: 0.16em; text-transform: uppercase;
       color: var(--green); border: 1px solid rgba(34,197,94,0.35);
       background: var(--green-dim); padding: 3px 8px; border-radius: 2px;
     }
     .skill-filename-badge {
-      font-size: 0.6rem; color: var(--text-dim); letter-spacing: 0.05em;
+      font-size: 0.75rem; color: var(--text-dim); letter-spacing: 0.05em;
     }
     .skill-body { flex: 1; overflow-y: auto; padding: 24px 28px; display: flex; flex-direction: column; gap: 24px; }
 
@@ -349,7 +380,7 @@
       background: var(--bg-1); border: 1px solid var(--border); border-radius: 2px;
       overflow: auto; max-height: 260px;
     }
-    .code-block pre { padding: 16px; font-size: 0.65rem; line-height: 1.7; white-space: pre; }
+    .code-block pre { padding: 16px; font-size: 0.78rem; line-height: 1.7; white-space: pre; }
     .hl-key     { color: var(--violet); }
     .hl-punct   { color: var(--text-dim); }
     .hl-str     { color: var(--green); }
@@ -358,28 +389,28 @@
 
     .install-section { display: flex; flex-direction: column; gap: 12px; }
     .install-path-tag {
-      font-size: 0.62rem; color: var(--green); background: var(--green-dim);
+      font-size: 0.75rem; color: var(--green); background: var(--green-dim);
       border: 1px solid rgba(34,197,94,0.25); border-radius: 2px; padding: 4px 10px;
       display: inline-flex; width: fit-content;
     }
     .btn-install-auto {
       padding: 9px 22px; background: var(--green-dim);
       border: 1px solid rgba(34,197,94,0.4); border-radius: 2px;
-      color: var(--green); font-family: 'Rajdhani', sans-serif; font-size: 0.95rem; font-weight: 600;
+      color: var(--green); font-family: 'Rajdhani', sans-serif; font-size: 1.05rem; font-weight: 600;
       letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; transition: all 0.2s ease;
       display: flex; align-items: center; gap: 8px; width: fit-content;
     }
     .btn-install-auto:hover:not(:disabled) { box-shadow: 0 0 16px rgba(34,197,94,0.25); background: rgba(34,197,94,0.2); }
     .btn-install-auto.installed { opacity: 0.7; cursor: default; }
     .install-usage {
-      font-size: 0.65rem; color: var(--text-mid); padding: 10px 14px;
+      font-size: 0.8rem; color: var(--text-mid); padding: 10px 14px;
       background: var(--bg-1); border-left: 2px solid var(--violet); border-radius: 0 2px 2px 0;
     }
     .install-usage code { color: var(--violet); }
     .manual-steps { list-style: none; display: flex; flex-direction: column; gap: 8px; }
-    .manual-steps li { font-size: 0.65rem; color: var(--text-mid); display: flex; gap: 10px; }
+    .manual-steps li { font-size: 0.8rem; color: var(--text-mid); display: flex; gap: 10px; }
     .inst-num {
-      color: var(--violet); font-size: 0.58rem; min-width: 18px;
+      color: var(--violet); font-size: 0.7rem; min-width: 18px;
       font-family: 'Rajdhani', sans-serif; font-weight: 600;
     }
 
@@ -390,14 +421,14 @@
     .btn-secondary {
       padding: 8px 20px; background: transparent;
       border: 1px solid var(--border-bright); border-radius: 2px;
-      color: var(--text-mid); font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+      color: var(--text-mid); font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;
       letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; transition: all 0.15s ease;
     }
     .btn-secondary:hover { border-color: var(--violet); color: var(--violet); }
     .btn-primary {
       padding: 8px 22px; background: var(--violet-dim);
       border: 1px solid var(--border-bright); border-radius: 2px;
-      color: var(--violet); font-family: 'Rajdhani', sans-serif; font-size: 0.95rem; font-weight: 600;
+      color: var(--violet); font-family: 'Rajdhani', sans-serif; font-size: 1.05rem; font-weight: 600;
       letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; transition: all 0.2s ease;
     }
     .btn-primary:hover { background: rgba(139,92,246,0.25); box-shadow: 0 0 14px var(--violet-glow); }
@@ -413,9 +444,25 @@
       letter-spacing: 0.1em; text-transform: uppercase; color: var(--red);
     }
     #error-message {
-      font-size: 0.68rem; color: var(--text-mid); text-align: center; max-width: 480px; line-height: 1.7;
+      font-size: 0.85rem; color: var(--text-mid); text-align: center; max-width: 480px; line-height: 1.7;
     }
     .error-actions { display: flex; gap: 10px; margin-top: 8px; }
+
+    /* ── LIGHT THEME OVERRIDES ────────────────── */
+    [data-theme="light"] .viewfinder-wrap { background: #d8dbe3; }
+    [data-theme="light"] .viewfinder-wrap::before { background: none; }
+    [data-theme="light"] .viewfinder-wrap::after { background: linear-gradient(90deg, transparent, rgba(124,58,237,0.3), transparent); }
+    [data-theme="light"] .home-content::after { background: radial-gradient(ellipse, rgba(124,58,237,0.08) 0%, transparent 70%); }
+    [data-theme="light"] .home-content::before { mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, black 20%, transparent 100%); }
+    [data-theme="light"] .question-card { background: var(--bg-2); }
+    [data-theme="light"] .code-block { background: #f8f9fa; border-color: var(--border); }
+    [data-theme="light"] .rec-statusbar { background: var(--bg-2); }
+    [data-theme="light"] .analysis-header { background: var(--bg-2); }
+    [data-theme="light"] .analysis-footer { background: var(--bg-2); }
+    [data-theme="light"] .skill-header { background: var(--bg-2); }
+    [data-theme="light"] .skill-footer { background: var(--bg-2); }
+    [data-theme="light"] .rec-hud { background: var(--bg-2); }
+    [data-theme="light"] .steps-list li { background: var(--bg-2); }
 
     /* ── SHARED SCROLLBAR ─────────────────────── */
     ::-webkit-scrollbar { width: 4px; }
@@ -443,7 +490,10 @@
   <!-- TITLEBAR -->
   <div class="titlebar">
     <div class="titlebar-brand">P<span>A</span>RROT</div>
-    <div class="titlebar-tag">Screen → AI Skill · v0.1</div>
+    <div class="titlebar-right">
+      <div class="titlebar-tag">Screen → AI Skill · v0.1</div>
+      <button class="btn-theme" id="btn-theme" title="Cambiar tema">☀</button>
+    </div>
   </div>
 
   <!-- ═══════════════════════════════════════════ -->
@@ -554,7 +604,7 @@
 
         <!-- 3 questions -->
         <div>
-          <div class="section-label">3 preguntas para clarificar el flujo <span style="color:var(--text-dim);font-size:0.55rem;">(todas opcionales)</span></div>
+          <div class="section-label">3 preguntas para clarificar el flujo <span style="color:var(--text-dim);font-size:0.65rem;">(todas opcionales)</span></div>
           <div style="display:flex;flex-direction:column;gap:12px;" id="wr-questions"></div>
         </div>
 
@@ -658,6 +708,35 @@
     </div>
   </div>
 
+  <script>
+    (function() {
+      const saved = localStorage.getItem('parrot-theme');
+      if (saved === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+      function updateIcon() {
+        const btn = document.getElementById('btn-theme');
+        if (!btn) return;
+        const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+        btn.textContent = isLight ? '☾' : '☀';
+        btn.title = isLight ? 'Tema oscuro' : 'Tema claro';
+      }
+      document.addEventListener('DOMContentLoaded', function() {
+        updateIcon();
+        document.getElementById('btn-theme').addEventListener('click', function() {
+          const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+          if (isLight) {
+            document.documentElement.removeAttribute('data-theme');
+            localStorage.setItem('parrot-theme', 'dark');
+          } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+            localStorage.setItem('parrot-theme', 'light');
+          }
+          updateIcon();
+        });
+      });
+    })();
+  </script>
   <script src="renderer.js"></script>
 </body>
 </html>
