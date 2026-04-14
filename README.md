@@ -1,7 +1,6 @@
 <div alinear="centro">
 
-<img src="activos/logotipo.png" alt=„Logotipo del loro" ancho="600" />
-
+<img src="assets/logo.png" alt="Parrot Logo" width="600" />
 # LORO
 
 ### *Graba una vez. Automatizar para siempre.*
