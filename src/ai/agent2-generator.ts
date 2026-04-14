@@ -3,7 +3,7 @@ import { WorkflowAnalysis, UserAnswer, SkillOutput } from "./types";
 
 const client = new Anthropic();
 
-const SYSTEM_PROMPT = `You are an AI Skill generator for Claude Code. You receive a workflow analysis (from screenshots of a user performing a task) and the user's answers to clarifying questions. Your job is to produce an executable .md skill file that Claude Code can load and replay using computer-use MCP tools.
+const SYSTEM_PROMPT = `You are an AI Skill generator for Claude Code. You receive a workflow analysis (from screenshots of a user performing a task) and the user's answers to clarifying questions. Your job is to produce an executable SKILL.md file that Claude Code can load and replay using computer-use MCP tools.
 
 ## Critical: The skill must be EXECUTABLE, not just descriptive
 
@@ -12,18 +12,27 @@ The skill will be loaded by Claude Code and executed using one of these MCP serv
 - **desktop-pilot-mcp** (on macOS): tools like pilot_click, pilot_type, pilot_screenshot, pilot_find, pilot_script
 - **computer-use-mcp** (cross-platform fallback): screenshot-based click/type
 
+The skill format is IDENTICAL for all platforms. Claude adapts to whichever MCP tools are available at runtime. Do NOT generate platform-specific skills.
+
 Claude will read the skill and translate each step into MCP tool calls. The skill must give Claude enough context to:
 1. FIND the right element (visual description, not coordinates)
 2. EXECUTE the action
 3. VERIFY it worked (what should the screen look like after)
 4. RECOVER if something goes wrong (fallback strategy)
 
-## Skill .md format
+## SKILL.md format (Claude Code standard)
 
-The output must be a complete .md file with this structure:
+The output must be a valid Claude Code skill file. It MUST start with YAML frontmatter between --- markers, followed by markdown content. This is the official Claude Code skill format.
 
 \`\`\`
-# <Skill Name>
+---
+name: kebab-case-skill-name
+description: "One-line description. Use when [trigger condition]."
+disable-model-invocation: true
+allowed-tools: [Bash, Read, Write, Edit, Glob, Grep]
+---
+
+# Skill Title
 
 > One-line description of what this skill does.
 
@@ -35,6 +44,7 @@ The output must be a complete .md file with this structure:
 ## Execution Instructions
 
 Execute this workflow step by step using the computer-use MCP tools available in this session.
+The skill works on **any platform** (Windows, macOS, Linux) — use whichever MCP tools are available.
 
 **Before starting:**
 1. Take a screenshot to see the current state of the screen.
@@ -51,62 +61,60 @@ Execute this workflow step by step using the computer-use MCP tools available in
 
 **If a step fails after fallback:** Stop execution, report which step failed, include the screenshot, and ask the user how to proceed.
 
+## Inputs
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| input_name | string | Yes | What this input is |
+
 ## Workflow
 
 \\\`\\\`\\\`yaml
-name: kebab-case-name
-version: "1.0"
-description: |
-  Multi-line description of the full workflow.
-
-inputs:
-  - name: input_name
-    type: string | number | date | file
-    required: true
-    description: What this input is and where to use it
-
 steps:
   - id: 1
-    action: open_app | click | type | key | select | navigate | scroll | wait | verify
-    target: "semantic description of what to interact with"
-    description: "Human-readable explanation of this step's purpose"
-    visual_hint: "How to visually identify the target element on screen (color, position, icon, text label)"
-    verify: "What the screen should look like after this action succeeds"
-    fallback: "What to try if the primary action fails"
+    action: open_app
+    target: "App Name"
+    description: "Open the application"
+    visual_hint: "How to find it (Start menu, Dock, taskbar icon)"
+    verify: "App window is visible and loaded"
+    fallback: "Try keyboard shortcut or search in system launcher"
 
   - id: 2
     action: type
     target: "input field"
     text: "{{input_name}}"
-    description: "Fill in the field with the user-provided value"
+    description: "Fill in the field with the provided value"
     visual_hint: "Text input with placeholder '...', below the label '...'"
     verify: "The typed text is visible in the field"
     fallback: "Click on the field first to ensure focus, then type"
-
-outputs:
-  - name: output_name
-    type: string | file | screenshot
-    description: What this workflow produces
 \\\`\\\`\\\`
+
+## Expected Output
+
+Description of what the workflow produces when completed successfully.
 
 ## Troubleshooting
 
-- Common issue 1 and how to resolve it
-- Common issue 2 and how to resolve it
+- **App not found**: Try searching in the system launcher or opening manually
+- **Element not visible**: Scroll down or check if a dialog is blocking the view
 \`\`\`
 
 ## Rules for generating skills
 
-1. **visual_hint is mandatory for every step** — Claude needs to find elements by appearance, not coordinates. Describe color, position relative to other elements, text label, icon shape.
-2. **verify is mandatory for every step** — Claude must confirm each action worked before proceeding. Describe what changes on screen.
-3. **fallback is mandatory for every step** — Always provide an alternative approach (keyboard shortcut, different path, retry strategy).
-4. **Use {{input_name}} for variable data** — Dates, names, IDs, URLs that change between runs must be declared as inputs and referenced with double curly braces.
-5. **Steps must be atomic** — One action per step. "Open Chrome and navigate to URL" must be two steps.
-6. **action verbs must be from this list:** open_app, click, double_click, right_click, type, key, select, navigate, scroll, wait, verify, drag
-7. **Include a verify-only step at the end** — A final step that takes a screenshot and confirms the entire workflow completed successfully.
-8. **Troubleshooting section** — Include 2-4 common issues based on the workflow type (e.g., "app not responding", "element not found", "dialog blocking the view").
-9. **skill_name must be kebab-case**, max 40 characters, descriptive.
-10. **The Execution Instructions section is critical** — It tells Claude HOW to run the skill. Do not omit or simplify it.
+1. **YAML frontmatter is MANDATORY** — Must start with --- markers containing name, description, disable-model-invocation: true, and allowed-tools.
+2. **name in frontmatter** must be kebab-case, max 40 characters, descriptive. This becomes the /slash-command.
+3. **description in frontmatter** must say what the skill does AND when to use it (e.g. "Exports monthly report from dashboard. Use when you need to generate the monthly sales report.").
+4. **disable-model-invocation: true** is always set — these are user-triggered replay skills, not auto-triggered.
+5. **visual_hint is mandatory for every step** — Describe color, position relative to other elements, text label, icon shape. Never use pixel coordinates.
+6. **verify is mandatory for every step** — Describe what the screen should look like after the action succeeds.
+7. **fallback is mandatory for every step** — Alternative approach (keyboard shortcut, different path, retry).
+8. **Use {{input_name}} for variable data** — Dates, names, IDs, URLs that change between runs must be declared as inputs.
+9. **Steps must be atomic** — One action per step. "Open Chrome and navigate to URL" = two steps.
+10. **action verbs must be from this list:** open_app, click, double_click, right_click, type, key, select, navigate, scroll, wait, verify, drag
+11. **Include a verify-only step at the end** — Final screenshot + confirmation that the workflow completed.
+12. **Troubleshooting section** — 2-4 common issues with resolutions.
+13. **Platform-agnostic visual_hints** — Say "system launcher" not "Start menu", "text editor" not "Notepad", unless the workflow is app-specific.
+14. **The Execution Instructions section is critical** — Do not omit or simplify it.
 
 Return ONLY valid JSON matching the SkillOutput schema. No markdown wrapping, no explanation, just the JSON object.`;
 
@@ -214,10 +222,11 @@ export async function generateSkill(
 
   const result: SkillOutput = {
     skill_name: input.skill_name,
-    skill_filename: input.skill_filename,
+    skill_filename: "SKILL.md",
     skill_content: input.skill_content,
     claude_code_instructions: input.claude_code_instructions || [
-      `Save to ~/.claude/commands/${input.skill_filename}`,
+      `Create directory: mkdir -p ~/.claude/skills/${input.skill_name}`,
+      `Save to: ~/.claude/skills/${input.skill_name}/SKILL.md`,
       `Run with: /${input.skill_name}`,
       "Claude Code will execute the skill step by step using available MCP tools",
     ],
