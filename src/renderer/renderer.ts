@@ -4,6 +4,7 @@ declare global {
   interface Window {
     parrotAPI: {
       getSources: () => Promise<{ id: string; name: string; thumbnail: string }[]>;
+      saveRecording: (buffer: ArrayBuffer) => Promise<string>;
     };
   }
 }
@@ -54,11 +55,19 @@ btnRecord.addEventListener('click', async () => {
 
 btnStop.addEventListener('click', () => {
   if (!mediaRecorder) return;
+
+  mediaRecorder.onstop = async () => {
+    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+    const arrayBuffer = await blob.arrayBuffer();
+    const filePath = await window.parrotAPI.saveRecording(arrayBuffer);
+    statusEl.textContent = `Grabacion guardada. Listo para analizar.`;
+    console.log('Recording saved to:', filePath);
+    btnAnalyze.disabled = false;
+  };
+
   mediaRecorder.stop();
-  statusEl.textContent = 'Grabacion detenida. Listo para analizar.';
   btnRecord.disabled = false;
   btnStop.disabled = true;
-  btnAnalyze.disabled = false;
 });
 
 btnAnalyze.addEventListener('click', () => {

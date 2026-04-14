@@ -4,46 +4,552 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Parrot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --bg-0: #0c0d10;
+      --bg-1: #111318;
+      --bg-2: #181b22;
+      --bg-3: #1e2230;
+      --border: rgba(139, 92, 246, 0.15);
+      --border-bright: rgba(139, 92, 246, 0.45);
+      --violet: #8b5cf6;
+      --violet-dim: #6d28d9;
+      --violet-glow: rgba(139, 92, 246, 0.25);
+      --violet-faint: rgba(139, 92, 246, 0.07);
+      --gray-text: #9ca3af;
+      --gray-dim: #4b5563;
+      --white: #f1f5f9;
+      --red: #ef4444;
+      --red-glow: rgba(239, 68, 68, 0.3);
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #0f0f0f;
-      color: #f0f0f0;
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--bg-0);
+      color: var(--white);
+      height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
-      gap: 24px;
+      overflow: hidden;
+      position: relative;
     }
-    h1 { font-size: 2rem; letter-spacing: 0.1em; }
-    .subtitle { color: #888; font-size: 0.9rem; }
-    .controls { display: flex; gap: 12px; }
+
+    /* Grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, black 40%, transparent 100%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Violet ambient glow */
+    body::after {
+      content: '';
+      position: fixed;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(ellipse, rgba(109, 40, 217, 0.12) 0%, transparent 70%);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      width: 480px;
+    }
+
+    /* Top decorative bar */
+    .topbar {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 0 20px 0;
+      animation: fadeSlideDown 0.6s ease both;
+    }
+
+    .topbar-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      font-weight: 400;
+      color: var(--gray-dim);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    .topbar-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--violet);
+      box-shadow: 0 0 8px var(--violet);
+      animation: pulse-slow 3s ease-in-out infinite;
+    }
+
+    /* Main card */
+    .card {
+      width: 100%;
+      background: var(--bg-1);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 48px 44px 40px;
+      position: relative;
+      animation: fadeIn 0.7s ease both 0.1s;
+      box-shadow:
+        0 0 0 1px rgba(139, 92, 246, 0.05),
+        0 24px 60px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    }
+
+    /* Corner accents */
+    .card::before,
+    .card::after {
+      content: '';
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border-color: var(--violet);
+      border-style: solid;
+    }
+    .card::before {
+      top: -1px;
+      left: -1px;
+      border-width: 2px 0 0 2px;
+    }
+    .card::after {
+      bottom: -1px;
+      right: -1px;
+      border-width: 0 2px 2px 0;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 36px;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .brand-name {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 2.6rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      line-height: 1;
+      color: var(--white);
+      text-transform: uppercase;
+    }
+
+    .brand-name span {
+      color: var(--violet);
+    }
+
+    .brand-sub {
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gray-dim);
+      font-weight: 400;
+    }
+
+    .version-badge {
+      font-size: 0.6rem;
+      letter-spacing: 0.1em;
+      color: var(--violet);
+      border: 1px solid var(--border-bright);
+      padding: 3px 8px;
+      border-radius: 2px;
+      background: var(--violet-faint);
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    /* Subtitle */
+    .subtitle {
+      font-size: 0.72rem;
+      color: var(--gray-text);
+      line-height: 1.7;
+      letter-spacing: 0.02em;
+      margin-bottom: 36px;
+      padding-bottom: 28px;
+      border-bottom: 1px solid var(--border);
+      font-weight: 300;
+    }
+
+    /* Recording indicator */
+    .rec-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 28px;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .rec-indicator.active {
+      opacity: 1;
+    }
+
+    .rec-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--red);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--red-glow);
+      animation: rec-pulse 1.2s ease-in-out infinite;
+    }
+
+    .rec-label {
+      font-size: 0.6rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--red);
+      font-weight: 500;
+    }
+
+    .rec-time {
+      margin-left: auto;
+      font-size: 0.65rem;
+      color: var(--gray-dim);
+      letter-spacing: 0.1em;
+    }
+
+    /* Controls */
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
     button {
-      padding: 12px 28px;
-      border: none;
-      border-radius: 8px;
-      font-size: 1rem;
+      position: relative;
+      padding: 14px 12px;
+      border: 1px solid transparent;
+      border-radius: 2px;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
       cursor: pointer;
-      transition: opacity 0.2s;
+      transition: all 0.2s ease;
+      overflow: hidden;
     }
-    button:hover { opacity: 0.85; }
-    #btn-record { background: #e53935; color: white; }
-    #btn-stop   { background: #555; color: white; }
-    #btn-analyze { background: #1976d2; color: white; }
-    #status { color: #aaa; font-size: 0.85rem; min-height: 1.2em; }
+
+    button::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    button:hover:not(:disabled)::before { opacity: 1; }
+
+    button:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    /* Record button */
+    #btn-record {
+      background: transparent;
+      color: var(--red);
+      border-color: rgba(239, 68, 68, 0.35);
+    }
+    #btn-record::before {
+      background: rgba(239, 68, 68, 0.08);
+    }
+    #btn-record:hover:not(:disabled) {
+      border-color: rgba(239, 68, 68, 0.7);
+      box-shadow: 0 0 16px rgba(239, 68, 68, 0.2), inset 0 0 16px rgba(239, 68, 68, 0.05);
+    }
+
+    /* Stop button */
+    #btn-stop {
+      background: transparent;
+      color: var(--gray-text);
+      border-color: var(--gray-dim);
+    }
+    #btn-stop::before {
+      background: rgba(156, 163, 175, 0.06);
+    }
+    #btn-stop:hover:not(:disabled) {
+      color: var(--white);
+      border-color: var(--gray-text);
+    }
+
+    /* Analyze button */
+    #btn-analyze {
+      background: var(--violet-faint);
+      color: var(--violet);
+      border-color: var(--border-bright);
+    }
+    #btn-analyze::before {
+      background: rgba(139, 92, 246, 0.1);
+    }
+    #btn-analyze:hover:not(:disabled) {
+      border-color: var(--violet);
+      color: var(--white);
+      box-shadow: 0 0 20px var(--violet-glow), inset 0 0 20px rgba(139, 92, 246, 0.07);
+    }
+
+    /* Status */
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+    }
+
+    .status-icon {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--violet);
+      flex-shrink: 0;
+      box-shadow: 0 0 6px var(--violet);
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .status-icon.recording {
+      background: var(--red);
+      box-shadow: 0 0 6px var(--red-glow);
+    }
+
+    #status {
+      font-size: 0.68rem;
+      color: var(--gray-text);
+      letter-spacing: 0.08em;
+      font-weight: 400;
+      flex: 1;
+      transition: color 0.3s ease;
+    }
+
+    /* Bottom bar */
+    .bottombar {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 0 0 0;
+      animation: fadeSlideUp 0.6s ease both 0.3s;
+    }
+
+    .sys-info {
+      display: flex;
+      gap: 20px;
+    }
+
+    .sys-info-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .sys-info-label {
+      font-size: 0.55rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gray-dim);
+    }
+
+    .sys-info-value {
+      font-size: 0.65rem;
+      color: var(--gray-text);
+      letter-spacing: 0.05em;
+    }
+
+    .sys-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.6rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gray-dim);
+    }
+
+    .sys-status-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 6px rgba(34, 197, 94, 0.5);
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeSlideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pulse-slow {
+      0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--violet); }
+      50% { opacity: 0.5; box-shadow: 0 0 3px var(--violet); }
+    }
+
+    @keyframes rec-pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.35); opacity: 0.6; }
+    }
+
+    /* Scanline overlay */
+    .scanlines {
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.03) 2px,
+        rgba(0, 0, 0, 0.03) 4px
+      );
+      pointer-events: none;
+      z-index: 0;
+    }
   </style>
 </head>
 <body>
-  <h1>🦜 Parrot</h1>
-  <p class="subtitle">Grabá tu flujo. La IA aprende. Cualquier agente lo reproduce.</p>
-  <div class="controls">
-    <button id="btn-record">Grabar</button>
-    <button id="btn-stop" disabled>Detener</button>
-    <button id="btn-analyze" disabled>Analizar</button>
+  <div class="scanlines"></div>
+
+  <div class="container">
+    <div class="topbar">
+      <span class="topbar-tag">SYS // PARROT_AGENT_v1</span>
+      <div class="topbar-dot"></div>
+    </div>
+
+    <div class="card">
+      <div class="header">
+        <div class="brand">
+          <div class="brand-name">PAR<span>R</span>OT</div>
+          <div class="brand-sub">Workflow capture system</div>
+        </div>
+        <div class="version-badge">v1.0.0</div>
+      </div>
+
+      <p class="subtitle">
+        Grabá tu flujo de trabajo. La IA aprende cada paso.<br>
+        Cualquier agente puede reproducirlo.
+      </p>
+
+      <div class="rec-indicator" id="rec-indicator">
+        <div class="rec-dot"></div>
+        <span class="rec-label">REC</span>
+        <span class="rec-time" id="rec-time">00:00</span>
+      </div>
+
+      <div class="controls">
+        <button id="btn-record">&#9654; Grabar</button>
+        <button id="btn-stop" disabled>&#9632; Detener</button>
+        <button id="btn-analyze" disabled>&#9670; Analizar</button>
+      </div>
+
+      <div class="status-row">
+        <div class="status-icon" id="status-icon"></div>
+        <p id="status">Listo para grabar</p>
+      </div>
+    </div>
+
+    <div class="bottombar">
+      <div class="sys-info">
+        <div class="sys-info-item">
+          <span class="sys-info-label">Codec</span>
+          <span class="sys-info-value">VP9 / WebM</span>
+        </div>
+        <div class="sys-info-item">
+          <span class="sys-info-label">Fuente</span>
+          <span class="sys-info-value">Desktop</span>
+        </div>
+      </div>
+      <div class="sys-status">
+        <div class="sys-status-dot"></div>
+        Sistema operativo
+      </div>
+    </div>
   </div>
-  <p id="status">Listo para grabar</p>
+
   <script src="renderer.js"></script>
+  <script>
+    // Recording timer
+    let timerInterval = null;
+    let seconds = 0;
+
+    function startTimer() {
+      seconds = 0;
+      timerInterval = setInterval(() => {
+        seconds++;
+        const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+        const s = String(seconds % 60).padStart(2, '0');
+        document.getElementById('rec-time').textContent = `${m}:${s}`;
+      }, 1000);
+    }
+
+    function stopTimer() {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+
+    // Hook into button events to toggle UI state
+    const _btnRecord = document.getElementById('btn-record');
+    const _btnStop = document.getElementById('btn-stop');
+    const _recIndicator = document.getElementById('rec-indicator');
+    const _statusIcon = document.getElementById('status-icon');
+
+    _btnRecord.addEventListener('click', () => {
+      setTimeout(() => {
+        _recIndicator.classList.add('active');
+        _statusIcon.classList.add('recording');
+        startTimer();
+      }, 300);
+    });
+
+    _btnStop.addEventListener('click', () => {
+      _recIndicator.classList.remove('active');
+      _statusIcon.classList.remove('recording');
+      stopTimer();
+    });
+  </script>
 </body>
 </html>
