@@ -1,0 +1,51 @@
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- SCR-04: ANALYSIS RESULT                    -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div id="screen-analysis-result">
+    <div class="analysis-layout">
+
+      <div class="analysis-header">
+        <div class="analysis-header-pill">Análisis</div>
+        <span class="analysis-header-title">Confirmá el workflow detectado</span>
+      </div>
+
+      <div class="analysis-body">
+
+        <!-- Workflow summary -->
+        <div class="workflow-card">
+          <div class="section-label">Workflow detectado</div>
+          <div class="workflow-name" id="wr-name">—</div>
+          <div class="workflow-desc" id="wr-desc"></div>
+        </div>
+
+        <!-- Steps -->
+        <div>
+          <div class="section-label">Pasos identificados</div>
+          <ul class="steps-list" id="wr-steps"></ul>
+        </div>
+
+        <!-- 3 questions -->
+        <div>
+          <div class="section-label">Preguntas de clarificación <span style="color:var(--text-dim);font-size:0.55rem;letter-spacing:0.08em;">(opcionales)</span></div>
+          <div class="questions-container" id="wr-questions"></div>
+        </div>
+
+        <!-- Additional context -->
+        <div class="additional-context-section">
+          <div class="section-label">Contexto adicional</div>
+          <textarea
+            id="additional-context"
+            class="additional-context-textarea"
+            placeholder="Agregá cualquier contexto extra que ayude a la IA a entender mejor tu workflow (opcional)…"
+            maxlength="1000"
+          ></textarea>
+        </div>
+
+      </div>
+
+      <div class="analysis-footer">
+        <button class="btn-generate" id="btn-generate-skill">Generar Skill →</button>
+      </div>
+
+    </div>
+  </div>

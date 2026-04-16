@@ -1,0 +1,93 @@
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- SCR-01: HOME                               -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div id="screen-home">
+    <div class="home-editorial">
+
+      <!-- ── TOP BAR ─────────────────────────── -->
+      <div class="hed-topbar">
+        <!-- Pixel parrot + wordmark -->
+        <div class="hed-logo">
+          <svg viewBox="0 0 16 18" width="18" height="20" style="image-rendering:pixelated;display:block;flex-shrink:0;" fill="#8b5cf6">
+            <rect x="8" y="0" width="4" height="1"/><rect x="5" y="1" width="9" height="1"/>
+            <rect x="4" y="2" width="2" height="1"/><rect x="7" y="2" width="7" height="1"/>
+            <rect x="3" y="3" width="11" height="1"/><rect x="2" y="4" width="10" height="1"/>
+            <rect x="13" y="4" width="2" height="1"/><rect x="1" y="5" width="11" height="1"/>
+            <rect x="0" y="6" width="10" height="1"/><rect x="1" y="7" width="8" height="1"/>
+            <rect x="2" y="8" width="9" height="1"/><rect x="2" y="9" width="8" height="1"/>
+            <rect x="1" y="10" width="6" height="1"/><rect x="0" y="11" width="6" height="1"/>
+            <rect x="0" y="12" width="4" height="1"/><rect x="0" y="13" width="2" height="1"/>
+            <rect x="4" y="15" width="2" height="1"/><rect x="9" y="15" width="2" height="1"/>
+            <rect x="3" y="16" width="2" height="1"/><rect x="10" y="16" width="2" height="1"/>
+          </svg>
+          <span class="hed-logo-name">PARROT</span>
+        </div>
+
+
+        <!-- Theme toggle — integrated here, not in titlebar -->
+        <button class="hed-theme-btn" title="Cambiar tema">☀</button>
+      </div>
+
+      <!-- ── TITLE BLOCK ───────────────────────── -->
+      <div class="hed-title-block">
+
+        <!-- Scattered decorative labels -->
+        <span class="hed-scatter hed-scat-r">Grabá tu pantalla · la IA hace el resto</span>
+
+        <!-- Floating sparkles -->
+        <span class="hed-spark hed-spark-1">✦</span>
+        <span class="hed-spark hed-spark-2">✦</span>
+        <span class="hed-spark hed-spark-3">✦</span>
+
+        <!-- Line 1: GRABÁ + recording icon suffix -->
+        <div class="hed-title-line hed-line-1">
+          <span>GRABÁ</span>
+          <span class="hed-letter-icon hed-suffix">
+            <!-- Recording circle: outer ring + filled dot -->
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="none">
+              <circle cx="50" cy="50" r="44" stroke="#dc2626" stroke-width="8"/>
+              <circle cx="50" cy="50" r="24" fill="#dc2626"/>
+            </svg>
+          </span>
+        </div>
+
+        <!-- Line 2: ENSEÑÁ + 4-point star suffix -->
+        <div class="hed-title-line hed-line-2">
+          <span>ENSEÑÁ</span>
+          <span class="hed-letter-icon hed-suffix">
+            <!-- 4-pointed star burst -->
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <path d="M50 3 L58 42 L97 50 L58 58 L50 97 L42 58 L3 50 L42 42 Z" fill="#7c3aed"/>
+            </svg>
+          </span>
+        </div>
+
+        <!-- Line 3: AUT[⟳]MATIZÁ — circular arrow on the O -->
+        <div class="hed-title-line hed-line-3">
+          <span>AUT</span>
+          <span class="hed-letter-icon">
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="none">
+              <path d="M84,50 A34,34 0 1,1 66,16" stroke="currentColor" stroke-width="13" stroke-linecap="round"/>
+              <path d="M54,4 L68,18 L54,28" stroke="currentColor" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span>MATIZÁ</span>
+        </div>
+
+        <!-- Buttons sit directly below the title -->
+        <div class="hed-actions">
+          <button class="hed-btn-glass hed-btn-red" id="btn-record">
+            <span class="hed-btn-dot"></span>GRABAR
+          </button>
+          <button class="hed-btn-glass hed-btn-violet" id="btn-open-library">
+            ⊞ MIS SKILLS
+          </button>
+        </div>
+
+      </div>
+
+      <!-- ── BOTTOM SPACER ──────────────────────── -->
+      <div style="height:18px;flex-shrink:0;"></div>
+
+    </div>
+  </div>

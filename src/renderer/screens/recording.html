@@ -1,0 +1,45 @@
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- SCR-02: RECORDING                          -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div id="screen-recording">
+    <div class="recording-layout">
+
+      <div class="rec-hud">
+        <div class="rec-hud-left">
+          <div class="rec-badge">
+            <div class="rec-dot"></div>
+            <span class="rec-label">Grabando</span>
+          </div>
+          <div class="rec-timer" id="rec-timer">00<span>:</span>00</div>
+          <div class="click-counter-badge" id="click-counter">0 frames</div>
+        </div>
+        <div class="rec-hud-right">
+          <button class="btn-stop-analyze" id="btn-stop-analyze" disabled>▶ Detener y Analizar</button>
+          <button class="btn-cancel" id="btn-cancel">✕ Cancelar</button>
+        </div>
+      </div>
+
+      <div class="viewfinder-wrap">
+        <div class="viewfinder">
+          <video id="preview" muted autoplay style="display:none;width:100%;height:100%;object-fit:contain;"></video>
+          <canvas id="sim-canvas" style="display:none;width:100%;height:100%;border-radius:14px;background:#0d0e12;"></canvas>
+          <div class="corner corner-tl"></div>
+          <div class="corner corner-tr"></div>
+          <div class="corner corner-bl"></div>
+          <div class="corner corner-br"></div>
+          <div class="vf-label-tl">PARROT · REC</div>
+          <div class="vf-label-tr" id="vf-source">Iniciando...</div>
+          <div class="vf-label-bl">VP9 · WebM</div>
+          <div class="vf-label-br" id="vf-chunks">● LIVE</div>
+        </div>
+      </div>
+
+      <div class="rec-statusbar">
+        <div class="statusbar-item"><div class="statusbar-dot"></div><span>Stream activo</span></div>
+        <div class="statusbar-item" id="sb-size">0 chunks · 0.0 MB</div>
+        <div class="statusbar-spacer"></div>
+        <div class="statusbar-item">desktopCapturer</div>
+      </div>
+
+    </div>
+  </div>

@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh repo:*)",
+      "Bash(gh api:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(curl:*)",
+      "Bash(pnpm install *)",
+      "Bash(pnpm approve-builds *)",
+      "Bash(pnpm rebuild *)",
+      "Bash(node_modules/.bin/tsc --version)",
+      "Bash(node_modules/.bin/esbuild --version)",
+      "Bash(node_modules/.bin/tsc)",
+      "Bash(node_modules/.bin/esbuild src/renderer/renderer.ts --bundle --outfile=dist/renderer/renderer.js --platform=browser)",
+      "Bash(cp src/renderer/index.html dist/renderer/index.html)",
+      "Bash(cp src/renderer/overlay.html dist/renderer/overlay.html)",
+      "Bash(node_modules/.bin/electron . --enable-logging)",
+      "Bash(node_modules/.bin/playwright --version)",
+      "Bash(node_modules/.bin/playwright install *)",
+      "Bash(node scripts/utn-novedades.js)",
+      "Bash(start *)",
+      "WebFetch(domain:api.github.com)",
+      "Bash(powershell *)",
+      "Bash(node \"C:/github desktop/Parrot/scripts/bundle-html.js\" \"C:/github desktop/Parrot/src/renderer/index.html\" \"C:/github desktop/Parrot/dist/renderer/index.html\")",
+      "Bash(pnpm build *)",
+      "Bash(electron .)",
+      "Bash(\"node_modules/electron/dist/electron.exe\" .)"
+    ]
+  }
+}

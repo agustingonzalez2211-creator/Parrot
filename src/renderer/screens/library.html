@@ -1,0 +1,36 @@
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- LIBRARY / DASHBOARD                        -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div id="screen-library">
+    <div class="library-layout">
+
+      <div class="library-header">
+        <button class="btn-back" id="btn-library-back">← Volver</button>
+        <div class="library-title">YOUR SKILLS</div>
+        <div class="library-count" id="lib-count">0 SKILLS</div>
+      </div>
+
+      <div class="lib-filter-bar">
+        <button class="lib-tab active" data-filter="all">All</button>
+        <button class="lib-tab" data-filter="browser">Browser</button>
+        <button class="lib-tab" data-filter="desktop">Desktop</button>
+      </div>
+
+      <div class="lib-grid-wrap">
+        <div class="lib-grid" id="skill-grid">
+          <div class="lib-empty" id="lib-empty">
+            <img src="../../../logo.png" class="lib-empty-logo" onerror="this.style.display='none'" alt="parrot">
+            <div class="lib-empty-title">No skills yet</div>
+            <div class="lib-empty-desc">Grabá tu primer workflow para generar un skill.</div>
+            <button class="btn-new-skill-empty" id="btn-new-from-empty">
+              <div class="btn-start-dot"></div>
+              Nueva grabación
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <button class="lib-fab" id="btn-fab-new" title="Nueva grabación">+</button>
+
+    </div>
+  </div>

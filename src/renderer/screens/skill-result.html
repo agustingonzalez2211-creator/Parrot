@@ -1,0 +1,57 @@
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- SCR-06: SKILL RESULT                       -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div id="screen-skill-result">
+    <div class="skill-layout">
+
+      <div class="skill-header">
+        <div class="skill-header-name" id="sr-name">skill-name</div>
+        <div class="skill-badge">listo</div>
+        <div class="skill-filename-badge" id="sr-filename"></div>
+      </div>
+
+      <div class="skill-body">
+
+        <!-- Code block -->
+        <div>
+          <div class="section-label">Contenido del skill (.md)</div>
+          <div class="code-block"><pre id="sr-code"></pre></div>
+        </div>
+
+        <!-- Install in Claude Code -->
+        <div class="install-section">
+          <div class="section-label">Instalar en Claude Code</div>
+
+          <!-- Auto install (shown when ~/.claude/skills/ exists) -->
+          <div id="sr-auto-install" style="display:none;flex-direction:column;gap:0;">
+            <div class="install-card">
+              <div class="install-path-tag" id="sr-install-path">~/.claude/skills/</div>
+              <button class="btn-install-auto" id="btn-install-auto">
+                ↓ Instalar automáticamente
+              </button>
+              <div class="install-usage">
+                Una vez instalado, invocá el skill con <code>/<span id="sr-usage-name">skill-name</span></code> en cualquier sesión de Claude Code.
+              </div>
+            </div>
+          </div>
+
+          <!-- Manual install (shown when directory doesn't exist) -->
+          <div id="sr-manual-install" style="display:none;flex-direction:column;gap:0;">
+            <div class="install-card">
+              <ol class="manual-steps" id="sr-install-steps"></ol>
+              <div class="install-usage">
+                Una vez instalado, invocá el skill con <code>/<span id="sr-usage-name-manual">skill-name</span></code> en cualquier sesión de Claude Code.
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="skill-footer">
+        <button class="btn-secondary" id="btn-new-recording">+ Nueva grabación</button>
+        <button class="btn-primary" id="btn-download-skill">↓ Descargar .md</button>
+      </div>
+
+    </div>
+  </div>

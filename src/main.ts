@@ -25,9 +25,15 @@ function createWindow(): void {
 
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
 
-  if (!app.isPackaged) {
-    mainWindow.webContents.openDevTools({ mode: 'bottom' });
-  }
+  // DevTools disabled — uncomment to debug:
+  // if (!app.isPackaged) mainWindow.webContents.openDevTools({ mode: 'bottom' });
+
+  mainWindow.on('closed', () => {
+    if (overlayWindow && !overlayWindow.isDestroyed()) {
+      overlayWindow.close();
+      overlayWindow = null;
+    }
+  });
 }
 
 app.whenReady().then(() => {
@@ -63,11 +69,12 @@ ipcMain.handle('open-overlay', () => {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
 
   overlayWindow = new BrowserWindow({
-    width: 220,
+    width: 280,
     height: 72,
-    x: width - 236,
+    x: width - 296,
     y: height - 88,
     frame: false,
+    transparent: true,
     alwaysOnTop: true,
     skipTaskbar: true,
     resizable: false,
@@ -83,6 +90,12 @@ ipcMain.handle('open-overlay', () => {
   overlayWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
 
   overlayWindow.on('closed', () => { overlayWindow = null; });
+});
+
+ipcMain.handle('set-overlay-theme', (_event, theme: 'light' | 'dark') => {
+  if (overlayWindow && !overlayWindow.isDestroyed()) {
+    overlayWindow.webContents.send('overlay-theme-change', theme);
+  }
 });
 
 ipcMain.handle('close-overlay', () => {

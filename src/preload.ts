@@ -16,6 +16,9 @@ contextBridge.exposeInMainWorld('parrotAPI', {
   closeOverlay: (): Promise<void> =>
     ipcRenderer.invoke('close-overlay'),
 
+  setOverlayTheme: (theme: 'light' | 'dark'): Promise<void> =>
+    ipcRenderer.invoke('set-overlay-theme', theme),
+
   onOverlayAction: (cb: (action: 'stop-analyze' | 'cancel') => void): void => {
     ipcRenderer.on('overlay-action', (_event, action) => cb(action));
   },
